@@ -1,5 +1,6 @@
 #include "switches.h"
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -13,7 +14,18 @@
 #define IP_ISR_OFFSET 0x0120
 
 static int fd;
-static int addr;
+static char *addr;
+
+// write to a register of the UIO device
+void switches_generic_write(uint32_t offset, uint32_t value) {
+  // the address is cast as a pointer so it can be dereferenced
+  *((volatile uint32_t *)(addr + offset)) = value;
+}
+
+// read from a register of the UIO device
+uint32_t switches_generic_read(uint32_t offset) {
+  return *((volatile uint32_t *)(addr + offset));
+}
 
 // Initialize the driver
 //  devFilePath: The file path to the uio dev file
@@ -40,8 +52,8 @@ int32_t switches_init(char *devFilePath) {
 
   /* put hardware setup here */
   // Enabling interrupt in the IPIER
-  generic_write(IP_IER_OFFSET, 0x00000001);
-  buttons_enable_interrupts();
+  switches_generic_write(IP_IER_OFFSET, 0x00000001);
+  switches_enable_interrupts();
 
   return SWITCHES_SUCCESS;
 }
@@ -49,7 +61,7 @@ int32_t switches_init(char *devFilePath) {
 // Return the current state of the switches
 uint8_t switches_read() {
   //
-  return generic_read(GPIO_DATA_OFFSET) & SWITCHES_ALL_MASK;
+  return switches_generic_read(GPIO_DATA_OFFSET) & SWITCHES_ALL_MASK;
 }
 
 // Call this on exit to clean up
@@ -62,34 +74,23 @@ void switches_exit() {
 // Enable GPIO interrupt output
 void switches_enable_interrupts() {
   //
-  generic_write(GIER_OFFSET, 0x80000000);
+  switches_generic_write(GIER_OFFSET, 0x80000000);
 }
 
 // Disable GPIO interrupt output
 void switches_disable_interrupts() {
   //
-  generic_write(GIER_OFFSET, 0x00000000);
+  switches_generic_write(GIER_OFFSET, 0x00000000);
 }
 
 // Return whether an interrupt is pending
 bool switches_interrupt_pending() {
   // Check for a one in bit 0 on IPISR to see if
-  return generic_read(IP_ISR_OFFSET) & 0x01;
+  return switches_generic_read(IP_ISR_OFFSET) & 0x01;
 }
 
 // Acknowledge a pending interrupt
 void switches_ack_interrupt() {
   // Make sure the IPISR knows its okay to receive interrupts again
-  generic_write(IP_ISR_OFFSET, 0x00000001);
-}
-
-// write to a register of the UIO device
-void generic_write(uint32_t offset, uint32_t value) {
-  // the address is cast as a pointer so it can be dereferenced
-  *((volatile uint32_t *)(addr + offset)) = value;
-}
-
-// read from a register of the UIO device
-uint32_t generic_read(uint32_t offset) {
-  return *((volatile uint32_t *)(addr + offset));
+  switches_generic_write(IP_ISR_OFFSET, 0x00000001);
 }

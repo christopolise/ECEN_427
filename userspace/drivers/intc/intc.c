@@ -1,5 +1,6 @@
 #include "intc.h"
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -15,7 +16,18 @@
 #define ISR_OFFSET 0x00
 
 static int fd;
-static int addr;
+static char *addr;
+
+// write to a register of the UIO device
+void intc_generic_write(uint32_t offset, uint32_t value) {
+  // the address is cast as a pointer so it can be dereferenced
+  *((volatile uint32_t *)(addr + offset)) = value;
+}
+
+// read from a register of the UIO device
+uint32_t intc_generic_read(uint32_t offset) {
+  return *((volatile uint32_t *)(addr + offset));
+}
 
 // Initializes the driver (opens UIO file and calls mmap)
 // devDevice: The file path to the uio dev file
@@ -41,7 +53,11 @@ int32_t intc_init(char devDevice[]) {
   }
 
   /* put hardware setup here */
-  generic_write(MER_OFFSET, 0x2);
+  intc_generic_write(IER_OFFSET, 0x7);
+  intc_generic_write(MER_OFFSET, 0x3);
+  intc_enable_uio_interrupts();
+
+  printf("Initialized the INTC driver\n\r");
 
   return INTC_SUCCESS;
 }
@@ -59,22 +75,23 @@ uint32_t intc_wait_for_interrupt() {
   //
   uint32_t fourbytes;
   read(fd, &fourbytes, sizeof(fourbytes));
-
-  return generic_read(ISR_OFFSET);
+  printf("RECEIVED INTERRUPT\n\r");
+  return intc_generic_read(ISR_OFFSET);
 }
 
 // Acknowledge interrupt(s) in the interrupt controller
 // irq_mask: Bitmask of interrupt lines to acknowledge.
 void intc_ack_interrupt(uint32_t irq_mask) {
   //
-  generic_write(IAR_OFFSET, irq_mask);
+  intc_generic_write(IAR_OFFSET, irq_mask);
 }
 
 // // Instruct the UIO to enable interrupts for this device in Linux
 // // (see the UIO documentation for how to do this)
 void intc_enable_uio_interrupts() {
   //
-  write(fd, 0x00000001, sizeof(char[4]));
+  uint32_t enable = 0x00000001;
+  write(fd, &enable, sizeof(enable));
 }
 
 // Enable interrupt line(s)
@@ -83,22 +100,11 @@ void intc_enable_uio_interrupts() {
 //	will not disable the interrupt line
 void intc_irq_enable(uint32_t irq_mask) {
   //
-  generic_write(SIE_OFFSET, irq_mask);
+  intc_generic_write(SIE_OFFSET, irq_mask);
 }
 
 // Same as intc_irq_enable, except this disables interrupt lines
 void intc_irq_disable(uint32_t irq_mask) {
   //
-  generic_write(CIE_OFFSET, irq_mask);
-}
-
-// write to a register of the UIO device
-void generic_write(uint32_t offset, uint32_t value) {
-  // the address is cast as a pointer so it can be dereferenced
-  *((volatile uint32_t *)(addr + offset)) = value;
-}
-
-// read from a register of the UIO device
-uint32_t generic_read(uint32_t offset) {
-  return *((volatile uint32_t *)(addr + offset));
+  intc_generic_write(CIE_OFFSET, irq_mask);
 }
