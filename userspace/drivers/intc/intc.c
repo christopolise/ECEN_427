@@ -57,8 +57,6 @@ int32_t intc_init(char devDevice[]) {
   intc_generic_write(MER_OFFSET, 0x3);
   intc_enable_uio_interrupts();
 
-  printf("Initialized the INTC driver\n\r");
-
   return INTC_SUCCESS;
 }
 
@@ -75,7 +73,6 @@ uint32_t intc_wait_for_interrupt() {
   //
   uint32_t fourbytes;
   read(fd, &fourbytes, sizeof(fourbytes));
-  printf("RECEIVED INTERRUPT\n\r");
   return intc_generic_read(ISR_OFFSET);
 }
 
