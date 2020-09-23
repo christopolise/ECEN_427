@@ -8,7 +8,7 @@
 #define INTC_ERROR -1
 #define INTC_MMAP_SIZE 0x0001000
 #define INTC_MMAP_OFFSET 0x0
-#define IER_OFFSET 0x0128
+#define IER_OFFSET 0x08
 #define SIE_OFFSET 0x10
 #define CIE_OFFSET 0x14
 #define MER_OFFSET 0x1C
