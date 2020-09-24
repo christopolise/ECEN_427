@@ -14,6 +14,8 @@
 #define MER_OFFSET 0x1C
 #define IAR_OFFSET 0x0C
 #define ISR_OFFSET 0x00
+#define ENABLE_INTERRUPTS 0x7
+#define ENABLE_MACHINE_INT 0x3
 
 static int fd;
 static char *addr;
@@ -53,8 +55,8 @@ int32_t intc_init(char devDevice[]) {
   }
 
   /* put hardware setup here */
-  intc_generic_write(IER_OFFSET, 0x7);
-  intc_generic_write(MER_OFFSET, 0x3);
+  intc_generic_write(IER_OFFSET, ENABLE_INTERRUPTS);
+  intc_generic_write(MER_OFFSET, ENABLE_MACHINE_INT);
   intc_enable_uio_interrupts();
 
   return INTC_SUCCESS;
