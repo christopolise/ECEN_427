@@ -17,6 +17,8 @@
 #define ENABLE_INTERRUPTS 0x7
 #define ENABLE_MACHINE_INT 0x3
 
+// Global variables that are the file descriptor for the device file opened for
+// the INTC And an address descriptor for the location of the device
 static int fd;
 static char *addr;
 
@@ -27,7 +29,9 @@ void intc_generic_write(uint32_t offset, uint32_t value) {
 }
 
 // read from a register of the UIO device
+// Return: value read from the offset given
 uint32_t intc_generic_read(uint32_t offset) {
+  // Goes to offset and returns its value
   return *((volatile uint32_t *)(addr + offset));
 }
 
@@ -43,6 +47,8 @@ uint32_t intc_generic_read(uint32_t offset) {
 int32_t intc_init(char devDevice[]) {
   fd = open(devDevice, O_RDWR);
   if (fd == OPEN_ERROR) {
+    // Upon error returned by open, we exit function with similar error and
+    // print out a msg to user
     printf("uio example init error -- did you forget to sudo?\n");
     return INTC_ERROR;
   }
@@ -51,10 +57,13 @@ int32_t intc_init(char devDevice[]) {
   addr = mmap(NULL, INTC_MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
               INTC_MMAP_OFFSET);
   if (addr == MAP_FAILED) {
+    // Upon error returned by mmap, we exit function with similar error
     return INTC_ERROR;
   }
 
   /* put hardware setup here */
+  // Enables appropriate bits in IER and MER registers to allow the intc to know
+  // which interrupts and what type will be needed for this program
   intc_generic_write(IER_OFFSET, ENABLE_INTERRUPTS);
   intc_generic_write(MER_OFFSET, ENABLE_MACHINE_INT);
   intc_enable_uio_interrupts();
@@ -64,7 +73,7 @@ int32_t intc_init(char devDevice[]) {
 
 // Called to exit the driver (unmap and close UIO file)
 void intc_exit() {
-  //
+  // Frees memory of virtual device file and closes the connection to the file
   munmap(addr, INTC_MMAP_SIZE);
   close(fd);
 }
@@ -72,7 +81,8 @@ void intc_exit() {
 // This function will block until an interrupt occurrs
 // Returns: Bitmask of activated interrupts
 uint32_t intc_wait_for_interrupt() {
-  //
+  // Create garbage buffer to write value received on device file, read is used
+  // as a blocking function to wait for an interrupt
   uint32_t fourbytes;
   read(fd, &fourbytes, sizeof(fourbytes));
   return intc_generic_read(ISR_OFFSET);
@@ -81,14 +91,16 @@ uint32_t intc_wait_for_interrupt() {
 // Acknowledge interrupt(s) in the interrupt controller
 // irq_mask: Bitmask of interrupt lines to acknowledge.
 void intc_ack_interrupt(uint32_t irq_mask) {
-  //
+  // Write desired mask to IAR register to acknowledge receipt
+  // of desired interrupts
   intc_generic_write(IAR_OFFSET, irq_mask);
 }
 
 // // Instruct the UIO to enable interrupts for this device in Linux
 // // (see the UIO documentation for how to do this)
 void intc_enable_uio_interrupts() {
-  //
+  // Create a hex val of 1 to write to the device file to signal to the OS
+  // that an interrupt has been received
   uint32_t enable = 0x00000001;
   write(fd, &enable, sizeof(enable));
 }
@@ -98,12 +110,12 @@ void intc_enable_uio_interrupts() {
 // This function only enables interrupt lines, ie, a 0 bit in irq_mask
 //	will not disable the interrupt line
 void intc_irq_enable(uint32_t irq_mask) {
-  //
+  // Write desired to the set IER register
   intc_generic_write(SIE_OFFSET, irq_mask);
 }
 
 // Same as intc_irq_enable, except this disables interrupt lines
 void intc_irq_disable(uint32_t irq_mask) {
-  //
+  // Write desired to the clear IER register
   intc_generic_write(CIE_OFFSET, irq_mask);
 }

@@ -32,12 +32,15 @@ void buttons_generic_write(uint32_t offset, uint32_t value) {
 
 // read from a register of the UIO device
 uint32_t buttons_generic_read(uint32_t offset) {
+  // Goes to offset and returns its value
   return *((volatile uint32_t *)(addr + offset));
 }
 
 int32_t buttons_init(char *devFilePath) {
   fd = open(devFilePath, O_RDWR);
   if (fd == OPEN_ERROR) {
+    // Upon error returned by open, we exit function with similar error and
+    // print out a msg to user
     printf("uio example init error -- did you forget to sudo?\n");
     return BUTTONS_ERROR;
   }
@@ -46,6 +49,7 @@ int32_t buttons_init(char *devFilePath) {
   addr = mmap(NULL, BUTTONS_MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
               BUTTONS_MMAP_OFFSET);
   if (addr == MAP_FAILED) {
+    // Upon error returned by mmap, we exit function with similar error
     return BUTTONS_ERROR;
   }
 
@@ -59,25 +63,28 @@ int32_t buttons_init(char *devFilePath) {
 
 // Return the current state of the buttons
 uint8_t buttons_read() {
-  //
+  // Read value from GPIO and checks it against available buttons, then returns
+  // value
   return buttons_generic_read(GPIO_DATA_OFFSET) & BUTTONS_ALL_MASK;
 }
 
 // Call this on exit to clean up
 void buttons_exit() {
+  // Frees memory of virtual device file and closes the connection to the file
   munmap(addr, BUTTONS_MMAP_SIZE);
   close(fd);
 }
 
 // Enable GPIO interrupt output
 void buttons_enable_interrupts() {
-  //
+  // Writes a 1 to appropriate bit in the general interrupt register to enable
+  // it
   buttons_generic_write(GIER_OFFSET, GIER_ENABLE);
 }
 
 // Disable GPIO interrupt output
 void buttons_disable_interrupts() {
-  //
+  // Writes a 0 to appropriate bit in the general interrupt register
   buttons_generic_write(GIER_OFFSET, GIER_DISABLE);
 }
 
