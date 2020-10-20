@@ -1,7 +1,9 @@
 #include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/err.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/platform.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("christopolise");
