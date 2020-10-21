@@ -216,6 +216,8 @@ static int audio_probe(struct platform_device *pdev) {
   }
   audio.phys_addr = rsrc_mem->start;
   audio.mem_size = rsrc_mem->end - rsrc_mem->start + 1;
+  dev_info(audio.dev, "Set physical addr: %x\n", audio.phys_addr);
+  dev_info(audio.dev, "Memory size: %d\n", audio.mem_size);
 
   // Reserve the memory region -- request_mem_region
   // Get a (virtual memory) pointer to the device -- ioremap
@@ -225,12 +227,14 @@ static int audio_probe(struct platform_device *pdev) {
     dev_err(audio.dev, "Could not allocate memory region for device\n");
     goto request_mem_region_err;
   }
+  dev_info(audio.dev, "Reserved memory\n");
 
   audio.virt_addr = ioremap(audio.phys_addr, audio.mem_size);
   if (IS_ERR(audio.virt_addr)) {
     dev_err(audio.dev, "Could not create virtual address for device\n");
     goto ioremap_err;
   }
+  dev_info(audio.dev, "Virt addr: %x\n", audio.virt_addr);
 
   // Get the IRQ number from the device tree -- platform_get_resource
   // Register your interrupt service routine -- request_irq
@@ -240,13 +244,14 @@ static int audio_probe(struct platform_device *pdev) {
     // goto platform_get_resource_err_irq;
   }
 
-  err = request_irq(rsrc_irq, audio_isr, 0, "ecen427_audio", NULL);
+dev_info(audio.dev, "IRQ start val: %d\n", 0);
+  err = request_irq(rsrc_irq->start, audio_isr, 0, "ecen427_audio", NULL);
   if(err)
   {
     dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
     goto request_irq_err;
   }
-
+  // iowrite32(__, audio.virt_addr);
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
   // successful.
@@ -255,6 +260,8 @@ static int audio_probe(struct platform_device *pdev) {
 
 
 request_irq_err:
+  dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
+  // freeirq()
 // platform_get_resource_irq:
 
 ioremap_err:
@@ -271,6 +278,8 @@ cdev_add_err:
 
 // Called when the platform device is removed
 static int audio_remove(struct platform_device *pdev) {
+
+// freeirq
 
   // iounmap
   iounmap(audio.phys_addr);
@@ -295,6 +304,6 @@ static ssize_t audio_write(struct file *filp, const char __user *buff, size_t co
 
 static irqreturn_t audio_isr(int irq, void * dev_id)
 {
-  pr_info("The ISR function was called\n");
+  pr_info("The ISR function was called. ISR: %d\n", irq);
   return IRQ_HANDLED;
 }
