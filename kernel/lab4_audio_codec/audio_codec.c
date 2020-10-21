@@ -63,7 +63,7 @@ static int audio_remove(struct platform_device *pdev);
 static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
 // static int audio_ioctl(struct inode *, struct file *, unsigned int, unsigned long);
-static irqreturn_t audio_isr(int irq, void * dev_id, struct pt_regs *regs);
+static irqreturn_t audio_isr(int irq, void * dev_id);
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Driver Functions ///////////////////////////////////////
@@ -92,8 +92,8 @@ struct file_operations audio_fops =
     {
         .owner = THIS_MODULE,
         .llseek = NULL,
-        // .read = audio_read,
-        // .write = audio_write,
+        .read = audio_read,
+        .write = audio_write,
         // .unlocked_ioctl = audio_ioctl,
         .open = NULL,
         .release = NULL,
@@ -129,6 +129,7 @@ static int audio_init(void) {
     pr_err("Could not create class for this device\n");
     goto class_create_err;
   }
+  pr_info("Created class: %s\n", CLASS_NAME);
 
   // Register the driver as a platform driver -- platform_driver_register
   err = platform_driver_register(&audio_platform_driver);
@@ -136,6 +137,7 @@ static int audio_init(void) {
     pr_err("Could not register platform driver\n");
     goto platform_driver_register_err;
   }
+  pr_info("Platform driver has been registered with name: %s\n", audio_platform_driver.driver.name);
 
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
@@ -144,10 +146,10 @@ static int audio_init(void) {
   return 0; //(Success)
 
 platform_driver_register_err:
-  pr_info("Destroying driver class\n");
+  pr_info("Destroying driver class: %s\n", CLASS_NAME);
   class_destroy(cl);
 class_create_err:
-  pr_info("Unregistering the device major number\n");
+  pr_info("Unregistering the device major number: %d\n", major_num);
   unregister_chrdev_region(dev_num, 1);
 alloc_chrdev_region_err:
   pr_info("ERR CODE: %d\n", err);
@@ -158,13 +160,13 @@ alloc_chrdev_region_err:
 static void audio_exit(void) {
   pr_info("%s: Removing Audio Driver!\n", MODULE_NAME);
   // platform_driver_unregister
-  pr_info("Unregistering the platform driver\n");
+  pr_info("Unregistering the platform driver: %s\n", audio_platform_driver.driver.name);
   platform_driver_unregister(&audio_platform_driver);
   // class_destroy
-  pr_info("Destroying driver class\n");
+  pr_info("Destroying driver class: %s\n", CLASS_NAME);
   class_destroy(cl);
   // unregister_chrdev_region
-  pr_info("Unregistering the device major number\n");
+  pr_info("Unregistering the device major number: %d\n", major_num);
   unregister_chrdev_region(dev_num, 1);
   return;
 }
@@ -238,7 +240,7 @@ static int audio_probe(struct platform_device *pdev) {
     // goto platform_get_resource_err_irq;
   }
 
-  err = request_irq(rsrc_irq->start, audio_isr, 0, "ecen427_audio", NULL);
+  err = request_irq(rsrc_irq, audio_isr, 0, "ecen427_audio", NULL);
   if(err)
   {
     dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
@@ -289,4 +291,10 @@ static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, lo
 static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
   pr_info("The write function was called\n");
   return 0;
+}
+
+static irqreturn_t audio_isr(int irq, void * dev_id)
+{
+  pr_info("The ISR function was called\n");
+  return IRQ_HANDLED;
 }
