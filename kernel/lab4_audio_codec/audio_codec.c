@@ -1,9 +1,11 @@
+#include <linux/module.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform.h>
+#include <linux/platform_device.h>
+#include <asm/io.h>
+#include <linux/interrupt.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("christopolise");
@@ -47,7 +49,27 @@ static int major_num;
 static dev_t dev_num;
 static struct class *cl;
 
-static struct of_device_id audio_of_match[] __devinitdata = {
+// The audio device - since this driver only supports one device, we don't
+// need a list here, we can just use a single struct.
+static struct audio_device audio;
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Forward function declarations //////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+static int audio_init(void);
+static void audio_exit(void);
+static int audio_probe(struct platform_device *pdev);
+static int audio_remove(struct platform_device *pdev);
+static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
+static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
+// static int audio_ioctl(struct inode *, struct file *, unsigned int, unsigned long);
+static irqreturn_t audio_isr(int irq, void * dev_id, struct pt_regs *regs);
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////// Driver Functions ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+static struct of_device_id audio_of_match[] = {
     {
         .compatible = "byu,ecen427-audio_codec",
     },
@@ -70,28 +92,12 @@ struct file_operations audio_fops =
     {
         .owner = THIS_MODULE,
         .llseek = NULL,
-        .read = audio_read,
-        .write = audio_write,
-        .unlocked_ioctl = audio_ioctl,
+        // .read = audio_read,
+        // .write = audio_write,
+        // .unlocked_ioctl = audio_ioctl,
         .open = NULL,
         .release = NULL,
-}
-
-// The audio device - since this driver only supports one device, we don't
-// need a list here, we can just use a single struct.
-static struct audio_device audio;
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Forward function declarations //////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-static int audio_init(void);
-static void audio_exit(void);
-static int audio_probe(struct platform_device *pdev);
-static int audio_remove(struct platform_device *pdev);
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////// Driver Functions ///////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+};
 
 // This section contains driver-level functions.  Remember, when you print
 // logging information from these functions, you should use the pr_*() functions
@@ -107,9 +113,9 @@ static int audio_init(void) {
   pr_info("%s: Initializing Audio Driver!\n", MODULE_NAME);
   int err;
   // Get a major number for the driver -- alloc_chrdev_region; // pg. 45, LDD3.
-  err = alloc_chrdev_region(&dev_num, 0, 1, MODULE_NAME));
+  err = alloc_chrdev_region(&dev_num, 0, 1, MODULE_NAME);
   if (err) {
-    pr_error("Could not allocate char device region\n");
+    pr_err("Could not allocate char device region\n");
     goto alloc_chrdev_region_err;
   }
   major_num = MAJOR(dev_num);
@@ -120,14 +126,14 @@ static int audio_init(void) {
   // Create a device class. -- class_create()
   cl = class_create(THIS_MODULE, CLASS_NAME);
   if (IS_ERR(cl)) {
-    pr_error("Could not create class for this device\n");
+    pr_err("Could not create class for this device\n");
     goto class_create_err;
   }
 
   // Register the driver as a platform driver -- platform_driver_register
-  err = platform_driver_register(&audio_platform_driver, THIS_MODULE);
+  err = platform_driver_register(&audio_platform_driver);
   if (err) {
-    pr_error("Could not register platform driver\n");
+    pr_err("Could not register platform driver\n");
     goto platform_driver_register_err;
   }
 
@@ -142,7 +148,7 @@ platform_driver_register_err:
   class_destroy(cl);
 class_create_err:
   pr_info("Unregistering the device major number\n");
-  unregister_chrdev_region(&dev_num, 1);
+  unregister_chrdev_region(dev_num, 1);
 alloc_chrdev_region_err:
   pr_info("ERR CODE: %d\n", err);
   return err;
@@ -153,13 +159,13 @@ static void audio_exit(void) {
   pr_info("%s: Removing Audio Driver!\n", MODULE_NAME);
   // platform_driver_unregister
   pr_info("Unregistering the platform driver\n");
-  platfrom_driver_unregister(&audio_platform_driver);
+  platform_driver_unregister(&audio_platform_driver);
   // class_destroy
   pr_info("Destroying driver class\n");
   class_destroy(cl);
   // unregister_chrdev_region
   pr_info("Unregistering the device major number\n");
-  unregister_chrdev_region(&dev_num, 1);
+  unregister_chrdev_region(dev_num, 1);
   return;
 }
 
@@ -187,7 +193,7 @@ static int audio_probe(struct platform_device *pdev) {
   // Register the character device with Linux (cdev_add)
   err = cdev_add(&audio.cdev, dev_no, 1);
   if (err) {
-    dev_err("Could not add audio device\n");
+    dev_err(audio.dev, "Could not add audio device\n");
     goto cdev_add_err;
   }
 
@@ -195,16 +201,16 @@ static int audio_probe(struct platform_device *pdev) {
   // from user space (device_create).
   audio.dev = device_create(cl, NULL, dev_no, NULL, "ecen427_audio");
   if (IS_ERR(audio.dev)) {
-    dev_err("Could not create device file\n");
+    dev_err(audio.dev, "Could not create device file\n");
     goto device_create_err;
   }
 
   // Get the physical device address from the device tree --
   // platform_get_resource
   struct resource *rsrc_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-  if (IS_ERR(rsrc)) {
-    dev_err("MEM: Could not pull required info from device tree\n");
-    goto platform_get_resource_err_mem;
+  if (IS_ERR(rsrc_mem)) {
+    dev_err(audio.dev, "MEM: Could not pull required info from device tree\n");
+    // goto platform_get_resource_err_mem;
   }
   audio.phys_addr = rsrc_mem->start;
   audio.mem_size = rsrc_mem->end - rsrc_mem->start + 1;
@@ -214,22 +220,29 @@ static int audio_probe(struct platform_device *pdev) {
   audio.mem_register =
       request_mem_region(audio.phys_addr, audio.mem_size, "ecen427_audio");
   if (IS_ERR(audio.mem_register)) {
-    dev_err("Could not allocate memory region for device\n");
+    dev_err(audio.dev, "Could not allocate memory region for device\n");
     goto request_mem_region_err;
   }
 
   audio.virt_addr = ioremap(audio.phys_addr, audio.mem_size);
   if (IS_ERR(audio.virt_addr)) {
-    dev_err("Could not create virtual address for device\n");
+    dev_err(audio.dev, "Could not create virtual address for device\n");
     goto ioremap_err;
   }
 
   // Get the IRQ number from the device tree -- platform_get_resource
   // Register your interrupt service routine -- request_irq
   struct resource *rsrc_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-  if (IS_ERR(rsrc)) {
-    dev_err("IRQ: Could not pull required info from device tree\n");
-    goto platform_get_resource_err_irq;
+  if (IS_ERR(rsrc_irq)) {
+    dev_err(audio.dev, "IRQ: Could not pull required info from device tree\n");
+    // goto platform_get_resource_err_irq;
+  }
+
+  err = request_irq(rsrc_irq->start, audio_isr, 0, "ecen427_audio", NULL);
+  if(err)
+  {
+    dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
+    goto request_irq_err;
   }
 
   // If any of the above functions fail, return an appropriate linux error
@@ -238,20 +251,42 @@ static int audio_probe(struct platform_device *pdev) {
 
   return 0; //(success)
 
-cdev_add_err:
-device_create_err:
-platform_get_resource_err:
-request_mem_region_err:
+
+request_irq_err:
+// platform_get_resource_irq:
+
 ioremap_err:
-platform_get_resource_irq:
+  iounmap(audio.phys_addr);
+request_mem_region_err:
+  release_mem_region(audio.phys_addr, audio.mem_size);
+// platform_get_resource_err:
+device_create_err:
+  device_destroy(cl, dev_num);
+cdev_add_err:
+  cdev_del(&audio.cdev);
+  return err;
 }
 
 // Called when the platform device is removed
 static int audio_remove(struct platform_device *pdev) {
 
   // iounmap
+  iounmap(audio.phys_addr);
   // release_mem_region
+  release_mem_region(audio.phys_addr, audio.mem_size);
   // device_destroy
+  device_destroy(cl, dev_num);
   // cdev_del
+  cdev_del(&audio.cdev);
+  return 0;
+}
+
+static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp) {
+  pr_info("The read function was called\n");
+  return 0;
+}
+
+static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
+  pr_info("The write function was called\n");
   return 0;
 }
