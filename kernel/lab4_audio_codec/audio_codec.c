@@ -13,6 +13,7 @@ MODULE_DESCRIPTION("ECEn 427 Audio Driver");
 
 #define MODULE_NAME "audio"
 #define CLASS_NAME "audio_class"
+#define I2S_STATUS_REG_OFFSET 0x10 / 4
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Device Struct //////////////////////////////////////////
@@ -35,6 +36,7 @@ struct audio_device {
 
   // Add any device-specific items to this that you need
   struct resource *mem_register; // Allocates a region of memory
+  struct resource *rsrc_irq; // IRQ interface
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,12 +93,9 @@ static struct platform_driver audio_platform_driver = {
 struct file_operations audio_fops =
     {
         .owner = THIS_MODULE,
-        .llseek = NULL,
         .read = audio_read,
         .write = audio_write,
         // .unlocked_ioctl = audio_ioctl,
-        .open = NULL,
-        .release = NULL,
 };
 
 // This section contains driver-level functions.  Remember, when you print
@@ -185,7 +184,6 @@ static void audio_exit(void) {
 static int audio_probe(struct platform_device *pdev) {
 
   int err;
-  int dev_no = MKDEV(major_num, 0);
 
   // Initialize the character device structure (cdev_init)
   cdev_init(&audio.cdev, &audio_fops);
@@ -193,7 +191,7 @@ static int audio_probe(struct platform_device *pdev) {
   audio.cdev.ops = &audio_fops;
 
   // Register the character device with Linux (cdev_add)
-  err = cdev_add(&audio.cdev, dev_no, 1);
+  err = cdev_add(&audio.cdev, dev_num, 1);
   if (err) {
     dev_err(audio.dev, "Could not add audio device\n");
     goto cdev_add_err;
@@ -201,7 +199,7 @@ static int audio_probe(struct platform_device *pdev) {
 
   // Create a device file in /dev so that the character device can be accessed
   // from user space (device_create).
-  audio.dev = device_create(cl, NULL, dev_no, NULL, "ecen427_audio");
+  audio.dev = device_create(cl, NULL, dev_num, NULL, "ecen427_audio");
   if (IS_ERR(audio.dev)) {
     dev_err(audio.dev, "Could not create device file\n");
     goto device_create_err;
@@ -234,24 +232,25 @@ static int audio_probe(struct platform_device *pdev) {
     dev_err(audio.dev, "Could not create virtual address for device\n");
     goto ioremap_err;
   }
-  dev_info(audio.dev, "Virt addr: %x\n", audio.virt_addr);
+  dev_info(audio.dev, "Virt addr: %p\n", audio.virt_addr);
 
   // Get the IRQ number from the device tree -- platform_get_resource
   // Register your interrupt service routine -- request_irq
-  struct resource *rsrc_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-  if (IS_ERR(rsrc_irq)) {
+  audio.rsrc_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+  if (IS_ERR(audio.rsrc_irq)) {
     dev_err(audio.dev, "IRQ: Could not pull required info from device tree\n");
     // goto platform_get_resource_err_irq;
   }
 
-dev_info(audio.dev, "IRQ start val: %d\n", 0);
-  err = request_irq(rsrc_irq->start, audio_isr, 0, "ecen427_audio", NULL);
+dev_info(audio.dev, "IRQ start val: %d\n", audio.rsrc_irq->start);
+  err = request_irq(audio.rsrc_irq->start, &audio_isr, 0, "ecen427_audio", NULL);
   if(err)
   {
     dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
     goto request_irq_err;
   }
-  // iowrite32(__, audio.virt_addr);
+  dev_info(audio.dev, "Virt Addr: %p\nVirt Addr Offset: %p", audio.virt_addr, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
   // successful.
@@ -261,13 +260,13 @@ dev_info(audio.dev, "IRQ start val: %d\n", 0);
 
 request_irq_err:
   dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
-  // freeirq()
+  free_irq(audio.rsrc_irq->start, NULL);
 // platform_get_resource_irq:
 
 ioremap_err:
-  iounmap(audio.phys_addr);
+  iounmap(audio.virt_addr);
 request_mem_region_err:
-  release_mem_region(audio.phys_addr, audio.mem_size);
+  release_mem_region(audio.mem_register->start, audio.mem_size);
 // platform_get_resource_err:
 device_create_err:
   device_destroy(cl, dev_num);
@@ -276,15 +275,15 @@ cdev_add_err:
   return err;
 }
 
-// Called when the platform device is removed
+// Called when the platform device is removedd
 static int audio_remove(struct platform_device *pdev) {
 
-// freeirq
+  free_irq(audio.rsrc_irq->start, NULL);
 
   // iounmap
-  iounmap(audio.phys_addr);
+  iounmap(audio.virt_addr);
   // release_mem_region
-  release_mem_region(audio.phys_addr, audio.mem_size);
+  release_mem_region(audio.mem_register->start, audio.mem_size);
   // device_destroy
   device_destroy(cl, dev_num);
   // cdev_del
@@ -305,5 +304,8 @@ static ssize_t audio_write(struct file *filp, const char __user *buff, size_t co
 static irqreturn_t audio_isr(int irq, void * dev_id)
 {
   pr_info("The ISR function was called. ISR: %d\n", irq);
+
+  iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+
   return IRQ_HANDLED;
 }
