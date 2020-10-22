@@ -250,7 +250,8 @@ dev_info(audio.dev, "IRQ start val: %d\n", audio.rsrc_irq->start);
     goto request_irq_err;
   }
   dev_info(audio.dev, "Virt Addr: %p\nVirt Addr Offset: %p", audio.virt_addr, audio.virt_addr + I2S_STATUS_REG_OFFSET);
-iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+  iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs were enabled\n") : pr_info("IRQs have not been\n");
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
   // successful.
@@ -303,9 +304,14 @@ static ssize_t audio_write(struct file *filp, const char __user *buff, size_t co
 
 static irqreturn_t audio_isr(int irq, void * dev_id)
 {
+
+  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs enabled\n") : pr_info("IRQs disabled\n");
+
   pr_info("The ISR function was called. ISR: %d\n", irq);
 
   iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+
+  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs enabled\n") : pr_info("IRQs disabled\n");
 
   return IRQ_HANDLED;
 }
