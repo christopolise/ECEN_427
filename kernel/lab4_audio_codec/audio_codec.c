@@ -5,6 +5,7 @@
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <asm/io.h>
+#include <asm/uaccess.h>
 #include <linux/interrupt.h>
 
 MODULE_LICENSE("GPL");
@@ -299,7 +300,7 @@ static int audio_remove(struct platform_device *pdev) {
 static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp) {
   pr_info("The read function was called\n");
 
-  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1FF800) && ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
+  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 && ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
   
 }
 
@@ -311,56 +312,44 @@ static ssize_t audio_write(struct file *filp, const char __user *buff, size_t co
   {
     return -EFAULT;
   }
-  audio.ptr = audio.data_buf;
+  audio.ptr = audio.data_buffer;
   audio.bytes_write = count;
   iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+
+  pr_info("Received val: %d\n", *(u32*)audio.data_buffer);
+
+  pr_info("Bytes read: %d\n", audio.bytes_write);
 
   return 0;
 }
 
 static irqreturn_t audio_isr(int irq, void * dev_id)
 {
-
-  u32 left_remaining_bytes;
-  u32 right_remaining_bytes;
+  u32 left_remaining_bytes = (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) >> 11) & 0x3FF;
 
   if(audio.bytes_write < 4)
   {
     if(!left_remaining_bytes)
     {
-      iowrite(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+      iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
     }
 
     return IRQ_HANDLED;
   }
 
-  left_remaining_bytes = ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1FF800);
-  left_remaining_bytes >>= 11;
   left_remaining_bytes = 1000 - left_remaining_bytes;
 
-  right_remaining_bytes = ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x7FE);
-  right_remaining_bytes >>= 1;
-  right_remaining_bytes = 1000 - right_remaining_bytes;
-
-  for(;left_remaining_bytes >= 0; left_remaining_bytes--)
+  for(u16 i = 0; i < left_remaining_bytes; i++)
   {
     iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0xC / 4);
     iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0x8 / 4);
     audio.bytes_write -=4;
+    audio.ptr += 4;
     if(audio.bytes_write < 4)
     {
       return IRQ_HANDLED;
     }
   }
-
-
-  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs enabled\n") : pr_info("IRQs disabled\n");
-
-  pr_info("The ISR function was called. ISR: %d\n", irq);
-
-  iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
-
-  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs enabled\n") : pr_info("IRQs disabled\n");
 
   return IRQ_HANDLED;
 }

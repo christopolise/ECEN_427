@@ -4,4 +4,5 @@
 # add_subdirectory(interrupt_test)
 # add_subdirectory(clock)
 # add_subdirectory(space_invaders)
-add_subdirectory(lab4_m1)
+# add_subdirectory(lab4_m1)
+add_subdirectory(lab4_m2)
