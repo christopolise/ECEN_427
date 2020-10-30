@@ -37,6 +37,10 @@ struct audio_device {
   // Add any device-specific items to this that you need
   struct resource *mem_register; // Allocates a region of memory
   struct resource *rsrc_irq; // IRQ interface
+
+  char data_buffer[512000];  // ~512KB buffer for audio data
+  char * ptr;
+  u32 bytes_write;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -294,16 +298,61 @@ static int audio_remove(struct platform_device *pdev) {
 
 static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp) {
   pr_info("The read function was called\n");
-  return 0;
+
+  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1FF800) && ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
+  
 }
 
 static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
   pr_info("The write function was called\n");
+
+  iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+  if(copy_from_user(audio.data_buffer, buff, count))
+  {
+    return -EFAULT;
+  }
+  audio.ptr = audio.data_buf;
+  audio.bytes_write = count;
+  iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+
   return 0;
 }
 
 static irqreturn_t audio_isr(int irq, void * dev_id)
 {
+
+  u32 left_remaining_bytes;
+  u32 right_remaining_bytes;
+
+  if(audio.bytes_write < 4)
+  {
+    if(!left_remaining_bytes)
+    {
+      iowrite(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+    }
+
+    return IRQ_HANDLED;
+  }
+
+  left_remaining_bytes = ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1FF800);
+  left_remaining_bytes >>= 11;
+  left_remaining_bytes = 1000 - left_remaining_bytes;
+
+  right_remaining_bytes = ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x7FE);
+  right_remaining_bytes >>= 1;
+  right_remaining_bytes = 1000 - right_remaining_bytes;
+
+  for(;left_remaining_bytes >= 0; left_remaining_bytes--)
+  {
+    iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0xC / 4);
+    iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0x8 / 4);
+    audio.bytes_write -=4;
+    if(audio.bytes_write < 4)
+    {
+      return IRQ_HANDLED;
+    }
+  }
+
 
   (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs enabled\n") : pr_info("IRQs disabled\n");
 

@@ -1,0 +1,1 @@
+add_executable(lab4_m2 lab4_m2.c)
