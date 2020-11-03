@@ -58,7 +58,7 @@ int main(int argc, char * argv[]) {
   printf("Opened WAV file successfully\n");
 
   // Read in raw data
-  int bytes_read = read(audio_fd, raw_audio, 512000);
+  int bytes_read = read(audio_fd, raw_audio, 128000 * sizeof(int16_t));
   if(bytes_read == -1)
   {
     printf("ERROR reading the wav file\n");
@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
   }
   printf("Bytes read: %d", bytes_read);
 
-  for(uint16_t i = 0; i < bytes_read; i++)
+  for(uint16_t i = 0; i < bytes_read/2; i++)
   {
     processed_audio[i] = raw_audio[i];
     processed_audio[i] <<= 8;
@@ -75,7 +75,7 @@ int main(int argc, char * argv[]) {
   int status_write;
   for (uint8_t i = 0; i < 2; i++)
   { 
-    status_write = write(fd, processed_audio, 512000);
+    status_write = write(fd, processed_audio, bytes_read);
     if(status_write == -1)
     {
       printf("ERROR playing the wav file\n");
