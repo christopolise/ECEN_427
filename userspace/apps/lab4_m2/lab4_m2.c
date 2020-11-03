@@ -25,8 +25,8 @@ int main(int argc, char * argv[]) {
   int fd; // File descriptor for the device file
   int audio_fd; // Audio file pointer
 
-  int16_t raw_audio[512000];
-  int32_t processed_audio[512000];
+  int16_t raw_audio[128000];
+  int32_t processed_audio[128000];
 
   if(!argc)
   {
