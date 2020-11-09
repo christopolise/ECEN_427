@@ -1,12 +1,13 @@
-#include <linux/module.h>
+#include <asm/io.h>
+#include <asm/uaccess.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/init.h>
-#include <linux/platform_device.h>
-#include <asm/io.h>
-#include <asm/uaccess.h>
 #include <linux/interrupt.h>
+#include <linux/ioctl.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("christopolise");
@@ -15,6 +16,10 @@ MODULE_DESCRIPTION("ECEn 427 Audio Driver");
 #define MODULE_NAME "audio"
 #define CLASS_NAME "audio_class"
 #define I2S_STATUS_REG_OFFSET 0x10 / 4
+#define AUDIO_IOC_MAGIC 0xFE
+#define AUDIO_IOC_ENABLE_LOOP _IO(AUDIO_IOC_MAGIC, 0)
+#define AUDIO_IOC_DISABLE_LOOP _IO(AUDIO_IOC_MAGIC, 1)
+#define AUDIO_IOC_MAXNR 3
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Device Struct //////////////////////////////////////////
@@ -37,11 +42,14 @@ struct audio_device {
 
   // Add any device-specific items to this that you need
   struct resource *mem_register; // Allocates a region of memory
-  struct resource *rsrc_irq; // IRQ interface
+  struct resource *rsrc_irq;     // IRQ interface
 
-  char data_buffer[512000];  // ~512KB buffer for audio data
-  char * ptr;
+  char data_buffer[512000]; // ~512KB buffer for audio data
+  char *ptr;
   u32 bytes_write;
+  u32 buff_size;
+
+  u8 loop_enable;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,10 +75,12 @@ static int audio_init(void);
 static void audio_exit(void);
 static int audio_probe(struct platform_device *pdev);
 static int audio_remove(struct platform_device *pdev);
-static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
-static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
-// static int audio_ioctl(struct inode *, struct file *, unsigned int, unsigned long);
-static irqreturn_t audio_isr(int irq, void * dev_id);
+static ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
+                          loff_t *offp);
+static ssize_t audio_write(struct file *filp, const char __user *buff,
+                           size_t count, loff_t *offp);
+static int audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+static irqreturn_t audio_isr(int irq, void *dev_id);
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Driver Functions ///////////////////////////////////////
@@ -95,12 +105,11 @@ static struct platform_driver audio_platform_driver = {
         },
 };
 
-struct file_operations audio_fops =
-    {
-        .owner = THIS_MODULE,
-        .read = audio_read,
-        .write = audio_write,
-        // .unlocked_ioctl = audio_ioctl,
+struct file_operations audio_fops = {
+    .owner = THIS_MODULE,
+    .read = audio_read,
+    .write = audio_write,
+    .unlocked_ioctl = audio_ioctl,
 };
 
 // This section contains driver-level functions.  Remember, when you print
@@ -112,7 +121,7 @@ module_init(audio_init);
 module_exit(audio_exit);
 
 // This is called when Linux loads your driver
-static int audio_init(void) {
+int audio_init(void) {
 
   pr_info("%s: Initializing Audio Driver!\n", MODULE_NAME);
   int err;
@@ -141,7 +150,8 @@ static int audio_init(void) {
     pr_err("Could not register platform driver\n");
     goto platform_driver_register_err;
   }
-  pr_info("Platform driver has been registered with name: %s\n", audio_platform_driver.driver.name);
+  pr_info("Platform driver has been registered with name: %s\n",
+          audio_platform_driver.driver.name);
 
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
@@ -161,10 +171,11 @@ alloc_chrdev_region_err:
 }
 
 // This is called when Linux unloads your driver
-static void audio_exit(void) {
+void audio_exit(void) {
   pr_info("%s: Removing Audio Driver!\n", MODULE_NAME);
   // platform_driver_unregister
-  pr_info("Unregistering the platform driver: %s\n", audio_platform_driver.driver.name);
+  pr_info("Unregistering the platform driver: %s\n",
+          audio_platform_driver.driver.name);
   platform_driver_unregister(&audio_platform_driver);
   // class_destroy
   pr_info("Destroying driver class: %s\n", CLASS_NAME);
@@ -186,7 +197,9 @@ static void audio_exit(void) {
 
 // Called by kernel when a platform device is detected that matches the
 // 'compatible' name of this driver.
-static int audio_probe(struct platform_device *pdev) {
+int audio_probe(struct platform_device *pdev) {
+
+  audio.loop_enable = 0;
 
   int err;
 
@@ -247,27 +260,29 @@ static int audio_probe(struct platform_device *pdev) {
     // goto platform_get_resource_err_irq;
   }
 
-dev_info(audio.dev, "IRQ start val: %d\n", audio.rsrc_irq->start);
-  err = request_irq(audio.rsrc_irq->start, &audio_isr, 0, "ecen427_audio", NULL);
-  if(err)
-  {
+  dev_info(audio.dev, "IRQ start val: %d\n", audio.rsrc_irq->start);
+  err =
+      request_irq(audio.rsrc_irq->start, &audio_isr, 0, "ecen427_audio", NULL);
+  if (err) {
     dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
     goto request_irq_err;
   }
-  dev_info(audio.dev, "Virt Addr: %p\nVirt Addr Offset: %p", audio.virt_addr, audio.virt_addr + I2S_STATUS_REG_OFFSET);
+  dev_info(audio.dev, "Virt Addr: %p\nVirt Addr Offset: %p", audio.virt_addr,
+           audio.virt_addr + I2S_STATUS_REG_OFFSET);
   iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
-  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1) ? pr_info("IRQs were enabled\n") : pr_info("IRQs have not been\n");
+  (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1)
+      ? pr_info("IRQs were enabled\n")
+      : pr_info("IRQs have not been\n");
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
   // successful.
 
   return 0; //(success)
 
-
 request_irq_err:
   dev_err(audio.dev, "IRQ: Could not set up manner to request IRQ\n");
   free_irq(audio.rsrc_irq->start, NULL);
-// platform_get_resource_irq:
+  // platform_get_resource_irq:
 
 ioremap_err:
   iounmap(audio.virt_addr);
@@ -282,7 +297,7 @@ cdev_add_err:
 }
 
 // Called when the platform device is removedd
-static int audio_remove(struct platform_device *pdev) {
+int audio_remove(struct platform_device *pdev) {
 
   free_irq(audio.rsrc_irq->start, NULL);
 
@@ -297,40 +312,40 @@ static int audio_remove(struct platform_device *pdev) {
   return 0;
 }
 
-static ssize_t audio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp) {
+ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
+                   loff_t *offp) {
   pr_info("The read function was called\n");
 
-  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 && ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
-  
+  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 &&
+          ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
 }
 
-static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
+ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,
+                    loff_t *offp) {
   pr_info("The write function was called\n");
 
   iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
-  if(copy_from_user(audio.data_buffer, buff, count))
-  {
+  if (copy_from_user(audio.data_buffer, buff, count)) {
     return -EFAULT;
   }
   audio.ptr = audio.data_buffer;
   audio.bytes_write = count;
+  audio.buff_size = count;
   iowrite32(0x1, audio.virt_addr + I2S_STATUS_REG_OFFSET);
 
-  pr_info("Received val: %d\n", *(u32*)audio.data_buffer);
+  pr_info("Received val: %d\n", *(u32 *)audio.data_buffer);
 
   pr_info("Bytes read: %d\n", audio.bytes_write);
 
   return 0;
 }
 
-static irqreturn_t audio_isr(int irq, void * dev_id)
-{
-  u32 left_remaining_bytes = (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) >> 11) & 0x3FF;
+irqreturn_t audio_isr(int irq, void *dev_id) {
+  u32 left_remaining_bytes =
+      (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) >> 11) & 0x3FF;
 
-  if(audio.bytes_write < 4)
-  {
-    if(!left_remaining_bytes)
-    {
+  if (audio.bytes_write < 4) {
+    if (!left_remaining_bytes) {
       iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
     }
 
@@ -339,17 +354,50 @@ static irqreturn_t audio_isr(int irq, void * dev_id)
 
   left_remaining_bytes = 1000 - left_remaining_bytes;
 
-  for(u16 i = 0; i < left_remaining_bytes; i++)
-  {
-    iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0xC / 4);
-    iowrite32(*(u32*)audio.ptr, audio.virt_addr + 0x8 / 4);
-    audio.bytes_write -=4;
+  for (u16 i = 0; i < left_remaining_bytes; i++) {
+    iowrite32(*(u32 *)audio.ptr, audio.virt_addr + 0xC / 4);
+    iowrite32(*(u32 *)audio.ptr, audio.virt_addr + 0x8 / 4);
+    audio.bytes_write -= 4;
     audio.ptr += 4;
-    if(audio.bytes_write < 4)
-    {
+    if (audio.bytes_write < 4) {
+      if (audio.loop_enable) {
+        audio.ptr = audio.data_buffer;
+        audio.bytes_write = audio.buff_size;
+        continue;
+      }
       return IRQ_HANDLED;
     }
   }
 
   return IRQ_HANDLED;
+}
+
+int audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
+
+  int err = 0;
+  int retval = 0;
+
+  if (_IOC_TYPE(cmd) != AUDIO_IOC_MAGIC)
+    return -ENOTTY;
+  if (_IOC_NR(cmd) > AUDIO_IOC_MAXNR)
+    return -ENOTTY;
+
+  if (_IOC_DIR(cmd) & _IOC_NONE)
+    err = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
+  if (err)
+    return -EFAULT;
+
+  switch (cmd) {
+  case AUDIO_IOC_ENABLE_LOOP:
+    dev_info(audio.dev, "Audio looping enabled\n");
+    audio.loop_enable = 1;
+    return 0;
+  case AUDIO_IOC_DISABLE_LOOP:
+    dev_info(audio.dev, "Audio looping disabled\n");
+    audio.loop_enable = 0;
+    return 0;
+  default:
+    dev_err(audio.dev, "Invalid parameter passed!\n");
+    return -ENOTTY;
+  }
 }
