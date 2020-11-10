@@ -372,7 +372,7 @@ irqreturn_t audio_isr(int irq, void *dev_id) {
   return IRQ_HANDLED;
 }
 
-int audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
+long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
 
   int err = 0;
   int retval = 0;
