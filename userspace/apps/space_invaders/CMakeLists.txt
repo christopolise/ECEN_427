@@ -11,6 +11,7 @@ add_executable(space_invaders main.c
                               alien_march.c
                               bunkers.c
                               flying_alien.c
-                              bullet.c)
+                              bullet.c
+                              sounds.c)
 
 target_link_libraries(space_invaders buttons switches intc)
