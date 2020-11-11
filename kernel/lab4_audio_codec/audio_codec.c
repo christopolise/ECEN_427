@@ -79,7 +79,7 @@ static ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
                           loff_t *offp);
 static ssize_t audio_write(struct file *filp, const char __user *buff,
                            size_t count, loff_t *offp);
-static int audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+static long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 static irqreturn_t audio_isr(int irq, void *dev_id);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +121,7 @@ module_init(audio_init);
 module_exit(audio_exit);
 
 // This is called when Linux loads your driver
-int audio_init(void) {
+static int audio_init(void) {
 
   pr_info("%s: Initializing Audio Driver!\n", MODULE_NAME);
   int err;
@@ -171,7 +171,7 @@ alloc_chrdev_region_err:
 }
 
 // This is called when Linux unloads your driver
-void audio_exit(void) {
+static void audio_exit(void) {
   pr_info("%s: Removing Audio Driver!\n", MODULE_NAME);
   // platform_driver_unregister
   pr_info("Unregistering the platform driver: %s\n",
@@ -197,7 +197,7 @@ void audio_exit(void) {
 
 // Called by kernel when a platform device is detected that matches the
 // 'compatible' name of this driver.
-int audio_probe(struct platform_device *pdev) {
+static int audio_probe(struct platform_device *pdev) {
 
   audio.loop_enable = 0;
 
@@ -297,7 +297,7 @@ cdev_add_err:
 }
 
 // Called when the platform device is removedd
-int audio_remove(struct platform_device *pdev) {
+static int audio_remove(struct platform_device *pdev) {
 
   free_irq(audio.rsrc_irq->start, NULL);
 
@@ -312,7 +312,7 @@ int audio_remove(struct platform_device *pdev) {
   return 0;
 }
 
-ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
+static ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
                    loff_t *offp) {
   pr_info("The read function was called\n");
 
@@ -320,7 +320,7 @@ ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
           ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
 }
 
-ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,
+static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,
                     loff_t *offp) {
   pr_info("The write function was called\n");
 
@@ -340,7 +340,7 @@ ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,
   return 0;
 }
 
-irqreturn_t audio_isr(int irq, void *dev_id) {
+static irqreturn_t audio_isr(int irq, void *dev_id) {
   u32 left_remaining_bytes =
       (ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) >> 11) & 0x3FF;
 
@@ -372,7 +372,7 @@ irqreturn_t audio_isr(int irq, void *dev_id) {
   return IRQ_HANDLED;
 }
 
-long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
+static long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
 
   int err = 0;
   int retval = 0;
@@ -391,11 +391,11 @@ long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
   case AUDIO_IOC_ENABLE_LOOP:
     dev_info(audio.dev, "Audio looping enabled\n");
     audio.loop_enable = 1;
-    return 0;
+    return retval;
   case AUDIO_IOC_DISABLE_LOOP:
     dev_info(audio.dev, "Audio looping disabled\n");
     audio.loop_enable = 0;
-    return 0;
+    return retval;
   default:
     dev_err(audio.dev, "Invalid parameter passed!\n");
     return -ENOTTY;
