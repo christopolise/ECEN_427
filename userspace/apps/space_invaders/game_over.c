@@ -35,8 +35,8 @@
 #define INITIAL_FACTOR_2 350
 
 typedef struct highscore_t {
-    char name[NAME_SIZE];
-    uint32_t score;
+  char name[NAME_SIZE];
+  uint32_t score;
 } null;
 
 static struct highscore_t scoreboard[NUM_SCORES];
@@ -51,102 +51,108 @@ static char white[HDMI_COLOR_FACTOR] = {0xFF, 0xFF, 0xFF};
 // Simple function that displays the name entered
 // @param - message string that is the name to be input
 void display_name(char *message) {
-    static char old_msg[INITIALS_FIELD_SIZE] = {'\0', '\0', '\0', '\0'};
-    hdmi_print_string((char *)old_msg, strlen((char *)old_msg), INITIALS_SCALE, black, black, INITIALS_Y_POS, INITIALS_X_POS);
-    hdmi_print_string(message, strlen(message), INITIALS_SCALE, white, black, INITIALS_Y_POS, INITIALS_X_POS);
-    old_msg[LETTER1] = message[LETTER1];
-    old_msg[LETTER2] = message[LETTER2];
-    old_msg[LETTER3] = message[LETTER3];
+  static char old_msg[INITIALS_FIELD_SIZE] = {'\0', '\0', '\0', '\0'};
+  hdmi_print_string((char *)old_msg, strlen((char *)old_msg), INITIALS_SCALE,
+                    black, black, INITIALS_Y_POS, INITIALS_X_POS);
+  hdmi_print_string(message, strlen(message), INITIALS_SCALE, white, black,
+                    INITIALS_Y_POS, INITIALS_X_POS);
+  old_msg[LETTER1] = message[LETTER1];
+  old_msg[LETTER2] = message[LETTER2];
+  old_msg[LETTER3] = message[LETTER3];
 }
 
 // Sets up the display by clearing screen and writing necessary components
 bool set_display() {
-    bool success = (hdmi_init(HDMI_DEVICE_FILE) == 0);
-    if (!success) {
-        // Exits program with error because the initialization of driver failed
-        printf("hdmi_init failed\n");
-    }
+  bool success = (hdmi_init(HDMI_DEVICE_FILE) == 0);
+  if (!success) {
+    // Exits program with error because the initialization of driver failed
+    printf("hdmi_init failed\n");
+  }
 
-    hdmi_fill_screen(black);
-    char *message = "GAME OVER";
-    hdmi_print_string(message, strlen(message), GO_TITLE_SCALE, white, black, GO_Y_POS, GO_X_POS);
+  hdmi_fill_screen(black);
+  char *message = "GAME OVER";
+  hdmi_print_string(message, strlen(message), GO_TITLE_SCALE, white, black,
+                    GO_Y_POS, GO_X_POS);
 
-    char name[INITIALS_FIELD_SIZE] = {letter1, letter2, letter3, '\0'};
-    display_name(name);
+  char name[INITIALS_FIELD_SIZE] = {letter1, letter2, letter3, '\0'};
+  display_name(name);
 
-    printf("AAA");
-    fflush(stdout);
+  printf("AAA");
+  fflush(stdout);
 
-    return success;
+  return success;
 }
 
 // Actualizes the highscore on file and keeps sorted
 // @param score highscore_t that is placed in file
 void update_highscores(struct highscore_t *score) {
-    struct highscore_t new_scores[NUM_SCORES];
-    bool score_used[NUM_SCORES + 1] = {false, false, false, false, false, false,
-                                       false, false, false, false, false};
+  struct highscore_t new_scores[NUM_SCORES];
+  bool score_used[NUM_SCORES + 1] = {false, false, false, false, false, false,
+                                     false, false, false, false, false};
 
-    for (uint8_t next_score_index = 0; next_score_index < NUM_SCORES; ++next_score_index) {
-      // For all scores
-        uint8_t highest_score_index = 0;
-        uint32_t highest_score = 0;
-        for (uint8_t i = 0; i <= NUM_SCORES; ++i) {
-          // For all the number of scores
-            if (!score_used[i]) {
-              // when the score is not used
-                if (i == NUM_SCORES) {
-                  // Score has reached max
-                    if (score->score > highest_score) {
-                        highest_score = score->score;
-                        highest_score_index = i;
-                    }
-                } else if (scoreboard[i].score >= highest_score) {
-                    highest_score = scoreboard[i].score;
-                    highest_score_index = i;
-                }
-            }
+  for (uint8_t next_score_index = 0; next_score_index < NUM_SCORES;
+       ++next_score_index) {
+    // For all scores
+    uint8_t highest_score_index = 0;
+    uint32_t highest_score = 0;
+    for (uint8_t i = 0; i <= NUM_SCORES; ++i) {
+      // For all the number of scores
+      if (!score_used[i]) {
+        // when the score is not used
+        if (i == NUM_SCORES) {
+          // Score has reached max
+          if (score->score > highest_score) {
+            highest_score = score->score;
+            highest_score_index = i;
+          }
+        } else if (scoreboard[i].score >= highest_score) {
+          highest_score = scoreboard[i].score;
+          highest_score_index = i;
         }
-
-        if (highest_score_index == NUM_SCORES) {
-          // If we found the highest, copy to the new scores index
-            memcpy((void *)&(new_scores[next_score_index]), (void *)score,
-                   sizeof(struct highscore_t));
-        } else {
-            memcpy((void *)&(new_scores[next_score_index]),
-                   (void *)&(scoreboard[highest_score_index]), sizeof(struct highscore_t));
-        }
-        score_used[highest_score_index] = true;
+      }
     }
-    memcpy((void *)&scoreboard, (void *)&new_scores, FILE_SIZE);
+
+    if (highest_score_index == NUM_SCORES) {
+      // If we found the highest, copy to the new scores index
+      memcpy((void *)&(new_scores[next_score_index]), (void *)score,
+             sizeof(struct highscore_t));
+    } else {
+      memcpy((void *)&(new_scores[next_score_index]),
+             (void *)&(scoreboard[highest_score_index]),
+             sizeof(struct highscore_t));
+    }
+    score_used[highest_score_index] = true;
+  }
+  memcpy((void *)&scoreboard, (void *)&new_scores, FILE_SIZE);
 }
 
 // Loads all the highscores in file into the display
 void load_highscores() {
-    if (access(FILE_NAME, F_OK) == FILE_DNE) {
-      // If we can't open the file bc it doesn't exist we make a new one
-        printf("initing new file\n");
-        for (uint8_t i = 0; i < NUM_SCORES; ++i) {
-          // Print initials for all of the socers
-            scoreboard[i].name[LETTER1] = 'A';
-            scoreboard[i].name[LETTER2] = 'A';
-            scoreboard[i].name[LETTER3] = 'A';
-            scoreboard[i].score = 0;
-        }
-    } else {
-      // file exists and we read contents into our highscore struct
-        int highscores_file = open(FILE_NAME, O_RDWR, S_IRUSR | S_IRGRP | S_IROTH);
-        read(highscores_file, scoreboard, sizeof(scoreboard));
-        close(highscores_file);
+  if (access(FILE_NAME, F_OK) == FILE_DNE) {
+    // If we can't open the file bc it doesn't exist we make a new one
+    printf("initing new file\n");
+    for (uint8_t i = 0; i < NUM_SCORES; ++i) {
+      // Print initials for all of the socers
+      scoreboard[i].name[LETTER1] = 'A';
+      scoreboard[i].name[LETTER2] = 'A';
+      scoreboard[i].name[LETTER3] = 'A';
+      scoreboard[i].score = 0;
     }
+  } else {
+    // file exists and we read contents into our highscore struct
+    int highscores_file = open(FILE_NAME, O_RDWR, S_IRUSR | S_IRGRP | S_IROTH);
+    read(highscores_file, scoreboard, sizeof(scoreboard));
+    close(highscores_file);
+  }
 }
 
 // Saves the higscores inside the highscore struct to a file
 void save_highscores() {
   // Open the highscores file and writes
-    int highscores_file = open(FILE_NAME, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
-    write(highscores_file, scoreboard, sizeof(scoreboard));
-    close(highscores_file);
+  int highscores_file =
+      open(FILE_NAME, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
+  write(highscores_file, scoreboard, sizeof(scoreboard));
+  close(highscores_file);
 }
 
 // clang-format off

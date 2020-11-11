@@ -8,8 +8,8 @@
 // Setter that can be called externally to cause game to end
 void globals_set_game_over();
 
-// Getter that will be called externally to poll whether the game has ended or not
-// RETURN true if the game is over or false if not
+// Getter that will be called externally to poll whether the game has ended or
+// not RETURN true if the game is over or false if not
 bool globals_get_game_over();
 
 // Getter that provides access to the global score
@@ -28,10 +28,24 @@ uint8_t globals_getLives();
 // @param - lives is a uint8_t for the new value of global_lives
 void globals_setLives(uint8_t lives);
 
-// Runs all necessary flag assignments and default values for the handling of a game
+bool globals_isExplosionPlayed();
+bool globals_isSaucerPlayed();
+bool globals_isBulletPlayed();
+bool globals_isWalkPlayed();
+bool globals_isLooping();
+
+void globals_setExplosionPlaying(bool enable);
+void globals_setSaucerPlaying(bool enable);
+void globals_setBulletPlaying(bool enable);
+void globals_setWalkPlaying(bool enable);
+void globals_setLooping(bool enable);
+
+// Runs all necessary flag assignments and default values for the handling of a
+// game
 void globals_init();
 
-// Steps through the states to make sure scores, lives, and other data is updated on a tick
+// Steps through the states to make sure scores, lives, and other data is
+// updated on a tick
 void globals_tick();
 
 #endif

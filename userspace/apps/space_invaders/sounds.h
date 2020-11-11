@@ -1,7 +1,6 @@
 #ifndef __SOUNDS_H__
 #define __SOUNDS_H__
 
-#include sounds.h
 #include <audio_config/audio_config.h>
 
 #define SOUND_FX_MAX_SIZE 128000
@@ -30,10 +29,12 @@ void sounds_init(char *devFile);
 
 void sounds_play(int32_t *sound);
 
-void toggle_looping(bool enable);
+void sounds_toggle_looping(bool enable);
 
-bool is_looping();
+bool sounds_is_looping();
 
 void sounds_exit(int fd);
+
+void sounds_tick();
 
 #endif
