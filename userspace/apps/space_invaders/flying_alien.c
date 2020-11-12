@@ -66,10 +66,15 @@ void flying_alien_tick() {
     sounds_toggle_looping(true);
     sounds_play(SOUNDS_UFO_INDX);
   }
+  else
+  {
+    sounds_toggle_looping(false);
+  }
 
   // check x position
   if (alien_pos_x > HDMI_DISPLAY_WIDTH - RIGHT_OFFSET) {
     alien_pos_x = HDMI_DISPLAY_WIDTH - RIGHT_OFFSET;
+    sounds_toggle_looping(false);
     is_gone = true;
     is_going_right = false;
     cnt = 0;
@@ -77,6 +82,7 @@ void flying_alien_tick() {
                      back, Y_COORD, alien_pos_x);
   } else if (alien_pos_x < LEFT_OFFSET) {
     alien_pos_x = LEFT_OFFSET;
+    sounds_toggle_looping(false);
     is_gone = true;
     is_going_right = true;
     cnt = 0;

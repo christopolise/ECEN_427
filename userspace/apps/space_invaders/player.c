@@ -234,9 +234,7 @@ void player_tick() {
     // If the duration of explosion animation has maxed out, reset counters,
     // tank position, and flags, go to init
 
-    printf("SOUND PLAYED\n");
     if (explosion_counter == 1) {
-      printf("SOUND PLAYED\n");
       sounds_toggle_looping(false);
       globals_setExplosionPlaying(true);
       sounds_play(SOUNDS_PLAYER_DIE_INDX);

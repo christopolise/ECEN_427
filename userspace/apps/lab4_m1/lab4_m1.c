@@ -16,6 +16,7 @@
 #define AUDIO_DEVICE_FILE "/dev/ecen427_audio"
 #define ADMIN_CHK_MSG "uio example init error -- did you forget to sudo?\n"
 #define DUMMY_BUF_LEN 10
+#define SUCCESS 0
 
 // Runs audio driver test in userspace to see dmesg instances later
 // returns 0 to indicate no errors in execution
@@ -29,6 +30,7 @@ char dummy_buf[DUMMY_BUF_LEN];  // Placeholder buffer needed to execute the read
   printf(WELCOME_MSG);
 
   fd = open(AUDIO_DEVICE_FILE, O_RDWR);
+  // If we cannot open the wave file
     if (fd == AUDIO_OPEN_ERROR) {
         // Upon error returned by open, we exit function with similar error and
         // print out a msg to user
@@ -39,6 +41,8 @@ char dummy_buf[DUMMY_BUF_LEN];  // Placeholder buffer needed to execute the read
 
   printf(READ_INTRO_MSG);    
   status = read(fd, dummy_buf, DUMMY_BUF_LEN);
+
+  // If we cannot use the audio_read func
     if (status == READ_ERROR) {
         // If reading the buffer is invalid or cannot happen
         // Exits with a read error code and prints info to terminal
@@ -49,6 +53,8 @@ char dummy_buf[DUMMY_BUF_LEN];  // Placeholder buffer needed to execute the read
 
     printf(WRITE_INTRO_MSG);
     status = write(fd, dummy_buf, DUMMY_BUF_LEN);
+
+    // If we cannot use the audio_write func
     if (status == WRITE_ERROR) {
         // If reading the buffer is invalid or cannot happen
         // Exits with a read error code and prints info to terminal
@@ -57,5 +63,5 @@ char dummy_buf[DUMMY_BUF_LEN];  // Placeholder buffer needed to execute the read
     }
 
     printf(TEST_SUCC_MSG);
-  return 0;
+  return SUCCESS;
 }
