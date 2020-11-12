@@ -1,9 +1,9 @@
 #include "flying_alien.h"
-#include "sprites.h"
-#include "hdmi.h"
-#include "sounds.h"
 #include "bullet.h"
 #include "globals.h"
+#include "hdmi.h"
+#include "sounds.h"
+#include "sprites.h"
 
 #define SCALE 2
 #define COLOR_ARRAY_SIZE 3
@@ -33,8 +33,10 @@ bool saucer_collision(uint16_t bullet_x, uint16_t bullet_y) {
   uint16_t alien_y_max = Y_COORD + SAUCER_HEIGHT * SCALE;
 
   // if we hit the saucer
-  if (bullet_x >= alien_x_min && bullet_x <= alien_x_max && bullet_y >= alien_y_min && bullet_y <= alien_y_max) {
-    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back, back, Y_COORD, alien_pos_x);
+  if (bullet_x >= alien_x_min && bullet_x <= alien_x_max &&
+      bullet_y >= alien_y_min && bullet_y <= alien_y_max) {
+    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back,
+                     back, Y_COORD, alien_pos_x);
     is_alive = false;
     return true;
   }
@@ -47,7 +49,7 @@ void flying_alien_tick() {
   static bool is_going_right = true;
   static bool is_gone = false;
   static uint16_t cnt = CNT_INIT;
-  
+
   // reset the is_alive flag
   if (cnt == CNT1) {
     is_alive = true;
@@ -55,13 +57,12 @@ void flying_alien_tick() {
   // count if bleow CNT2
   if (cnt < CNT2) {
     ++cnt;
-  }
-  else if (cnt == CNT2) {
+  } else if (cnt == CNT2) {
     is_gone = false;
   }
 
-  if(!globals_isBulletPlayed() && !globals_isExplosionPlayed() && sounds_is_available())
-  {
+  if (!globals_isBulletPlayed() && !globals_isExplosionPlayed() &&
+      sounds_is_available()) {
     sounds_toggle_looping(true);
     sounds_play(SOUNDS_UFO_INDX);
   }
@@ -72,27 +73,28 @@ void flying_alien_tick() {
     is_gone = true;
     is_going_right = false;
     cnt = 0;
-    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back, back, Y_COORD, alien_pos_x);
-  }
-  else if (alien_pos_x < LEFT_OFFSET) {
+    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back,
+                     back, Y_COORD, alien_pos_x);
+  } else if (alien_pos_x < LEFT_OFFSET) {
     alien_pos_x = LEFT_OFFSET;
     is_gone = true;
     is_going_right = true;
     cnt = 0;
-    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back, back, Y_COORD, alien_pos_x);
+    hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, back,
+                     back, Y_COORD, alien_pos_x);
   }
   // if the saucer is still on the screen
   if (!is_gone) {
     // check the direction of the saucer
     if (is_going_right) {
       alien_pos_x += SAUCER_STEP;
-    }
-    else {
+    } else {
       alien_pos_x -= SAUCER_STEP;
     }
     // draw it if it's alive
     if (is_alive) {
-      hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE, magenta, back, Y_COORD, alien_pos_x);
+      hdmi_draw_sprite(sprite_saucer_18x7, SAUCER_LEN, SAUCER_HEIGHT, SCALE,
+                       magenta, back, Y_COORD, alien_pos_x);
     }
   }
 
@@ -105,7 +107,7 @@ void flying_alien_tick() {
   if (saucer_collision(bullet_x, bullet_y)) {
     bullet_set_player_bullet_collide();
     globals_setScore(globals_getScore() + SAUCER_BONUS);
-          sounds_toggle_looping(false);
+    sounds_toggle_looping(false);
     sounds_play(SOUNDS_UFO_DIE_INDX);
   }
 }

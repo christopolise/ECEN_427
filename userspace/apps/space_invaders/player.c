@@ -1,8 +1,8 @@
 #include "player.h"
 #include "bullet.h"
 #include "globals.h"
-#include "sprites.h"
 #include "sounds.h"
+#include "sprites.h"
 #include <buttons/buttons.h>
 
 #define START_POS_X HDMI_DISPLAY_WIDTH / 2 - 8
@@ -206,14 +206,14 @@ void player_tick() {
     // If fire button is pressed, go to fire state
     if (buttons & BUTTONS_0_MASK) {
       currentPlayerHandler = fire_st;
-      if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !bullet_get_player_bullet_is_alive())
-    {
-            sounds_toggle_looping(false);
-      globals_setBulletPlaying(true);
-      sounds_play(SOUNDS_LASER_INDX);
-      globals_setBulletPlaying(false);
-    }
-      
+      if (!globals_isExplosionPlayed() && !globals_isBulletPlayed() &&
+          !bullet_get_player_bullet_is_alive()) {
+        sounds_toggle_looping(false);
+        globals_setBulletPlaying(true);
+        sounds_play(SOUNDS_LASER_INDX);
+        globals_setBulletPlaying(false);
+      }
+
     }
     // Go back to waiting for input
     else {
@@ -235,8 +235,7 @@ void player_tick() {
     // tank position, and flags, go to init
 
     printf("SOUND PLAYED\n");
-    if(explosion_counter ==1)
-    {
+    if (explosion_counter == 1) {
       printf("SOUND PLAYED\n");
       sounds_toggle_looping(false);
       globals_setExplosionPlaying(true);

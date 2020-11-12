@@ -313,19 +313,19 @@ static int audio_remove(struct platform_device *pdev) {
 }
 
 static ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
-                   loff_t *offp) {
+                          loff_t *offp) {
   pr_info("The read function was called\n");
 
   // return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 &&
   //         ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
 
-  u32 status = ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET);  // 0x10 / 4
-  u32 bytes = (status >> 1) & 0x3FF; //0x3FF
+  u32 status = ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET); // 0x10 / 4
+  u32 bytes = (status >> 1) & 0x3FF;                              // 0x3FF
   return (status & 1) && (bytes > 0);
 }
 
-static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,
-                    loff_t *offp) {
+static ssize_t audio_write(struct file *filp, const char __user *buff,
+                           size_t count, loff_t *offp) {
   pr_info("The write function was called\n");
 
   iowrite32(0x0, audio.virt_addr + I2S_STATUS_REG_OFFSET);
@@ -376,7 +376,8 @@ static irqreturn_t audio_isr(int irq, void *dev_id) {
   return IRQ_HANDLED;
 }
 
-static long audio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
+static long audio_ioctl(struct file *filp, unsigned int cmd,
+                        unsigned long arg) {
 
   int err = 0;
   int retval = 0;

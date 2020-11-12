@@ -1,7 +1,7 @@
 #include "bunkers.h"
-#include "sprites.h"
-#include "hdmi.h"
 #include "bullet.h"
+#include "hdmi.h"
+#include "sprites.h"
 
 #define SCALE 2
 #define BUNKER_LIVES 4U
@@ -53,45 +53,46 @@ static struct bunker_t bunkers[NUM_BUNKERS];
 // param[in] bunker_area the bunker area
 // param[in] y the y coord of the block
 // param[in] x the x coord of the block
-void bunkers_print_damaged_block(uint8_t bunker, enum bunker_area_t bunker_area, uint16_t y, uint16_t x) {
+void bunkers_print_damaged_block(uint8_t bunker, enum bunker_area_t bunker_area,
+                                 uint16_t y, uint16_t x) {
   uint32_t bunker_block_sprite[BUNKER_BLOCK_SPRITE_SIZE];
   // set the sprite based on the damage of the bunker
   switch (bunkers[bunker].lives[bunker_area]) {
-    case MININALLY_DAMAGED:
-      bunker_block_sprite[ELEM0] = sprite_bunkerDamage2_6x6[ELEM0];
-      bunker_block_sprite[ELEM1] = sprite_bunkerDamage2_6x6[ELEM1];
-      bunker_block_sprite[ELEM2] = sprite_bunkerDamage2_6x6[ELEM2];
-      bunker_block_sprite[ELEM3] = sprite_bunkerDamage2_6x6[ELEM3];
-      bunker_block_sprite[ELEM4] = sprite_bunkerDamage2_6x6[ELEM4];
-      bunker_block_sprite[ELEM5] = sprite_bunkerDamage2_6x6[ELEM5];
+  case MININALLY_DAMAGED:
+    bunker_block_sprite[ELEM0] = sprite_bunkerDamage2_6x6[ELEM0];
+    bunker_block_sprite[ELEM1] = sprite_bunkerDamage2_6x6[ELEM1];
+    bunker_block_sprite[ELEM2] = sprite_bunkerDamage2_6x6[ELEM2];
+    bunker_block_sprite[ELEM3] = sprite_bunkerDamage2_6x6[ELEM3];
+    bunker_block_sprite[ELEM4] = sprite_bunkerDamage2_6x6[ELEM4];
+    bunker_block_sprite[ELEM5] = sprite_bunkerDamage2_6x6[ELEM5];
     break;
-    case DAMAGED:
-      bunker_block_sprite[ELEM0] = sprite_bunkerDamage1_6x6[ELEM0];
-      bunker_block_sprite[ELEM1] = sprite_bunkerDamage1_6x6[ELEM1];
-      bunker_block_sprite[ELEM2] = sprite_bunkerDamage1_6x6[ELEM2];
-      bunker_block_sprite[ELEM3] = sprite_bunkerDamage1_6x6[ELEM3];
-      bunker_block_sprite[ELEM4] = sprite_bunkerDamage1_6x6[ELEM4];
-      bunker_block_sprite[ELEM5] = sprite_bunkerDamage1_6x6[ELEM5];
+  case DAMAGED:
+    bunker_block_sprite[ELEM0] = sprite_bunkerDamage1_6x6[ELEM0];
+    bunker_block_sprite[ELEM1] = sprite_bunkerDamage1_6x6[ELEM1];
+    bunker_block_sprite[ELEM2] = sprite_bunkerDamage1_6x6[ELEM2];
+    bunker_block_sprite[ELEM3] = sprite_bunkerDamage1_6x6[ELEM3];
+    bunker_block_sprite[ELEM4] = sprite_bunkerDamage1_6x6[ELEM4];
+    bunker_block_sprite[ELEM5] = sprite_bunkerDamage1_6x6[ELEM5];
     break;
-    case HEAVILY_DAMAGED:
-      bunker_block_sprite[ELEM0] = sprite_bunkerDamage0_6x6[ELEM0];
-      bunker_block_sprite[ELEM1] = sprite_bunkerDamage0_6x6[ELEM1];
-      bunker_block_sprite[ELEM2] = sprite_bunkerDamage0_6x6[ELEM2];
-      bunker_block_sprite[ELEM3] = sprite_bunkerDamage0_6x6[ELEM3];
-      bunker_block_sprite[ELEM4] = sprite_bunkerDamage0_6x6[ELEM4];
-      bunker_block_sprite[ELEM5] = sprite_bunkerDamage0_6x6[ELEM5];
+  case HEAVILY_DAMAGED:
+    bunker_block_sprite[ELEM0] = sprite_bunkerDamage0_6x6[ELEM0];
+    bunker_block_sprite[ELEM1] = sprite_bunkerDamage0_6x6[ELEM1];
+    bunker_block_sprite[ELEM2] = sprite_bunkerDamage0_6x6[ELEM2];
+    bunker_block_sprite[ELEM3] = sprite_bunkerDamage0_6x6[ELEM3];
+    bunker_block_sprite[ELEM4] = sprite_bunkerDamage0_6x6[ELEM4];
+    bunker_block_sprite[ELEM5] = sprite_bunkerDamage0_6x6[ELEM5];
     break;
-    case GONE:
-      bunker_block_sprite[ELEM0] = 0U;
-      bunker_block_sprite[ELEM1] = 0U;
-      bunker_block_sprite[ELEM2] = 0U;
-      bunker_block_sprite[ELEM3] = 0U;
-      bunker_block_sprite[ELEM4] = 0U;
-      bunker_block_sprite[ELEM5] = 0U;
+  case GONE:
+    bunker_block_sprite[ELEM0] = 0U;
+    bunker_block_sprite[ELEM1] = 0U;
+    bunker_block_sprite[ELEM2] = 0U;
+    bunker_block_sprite[ELEM3] = 0U;
+    bunker_block_sprite[ELEM4] = 0U;
+    bunker_block_sprite[ELEM5] = 0U;
     break;
-    default:
+  default:
     break;
-    };
+  };
 
   // cut off part of the sprite to make it the right shape
   if (bunker_area == TOP_1) {
@@ -102,7 +103,7 @@ void bunkers_print_damaged_block(uint8_t bunker, enum bunker_area_t bunker_area,
     bunker_block_sprite[ELEM4] &= sprite_bunker_upper_left_gone_6x6[ELEM4];
     bunker_block_sprite[ELEM5] &= sprite_bunker_upper_left_gone_6x6[ELEM5];
   }
-  
+
   // cut off part of the sprite to make it the right shape
   else if (bunker_area == TOP_4) {
     bunker_block_sprite[ELEM0] &= sprite_bunker_upper_right_gone_6x6[ELEM0];
@@ -120,9 +121,10 @@ void bunkers_print_damaged_block(uint8_t bunker, enum bunker_area_t bunker_area,
     bunker_block_sprite[ELEM3] &= sprite_bunker_lower_right_gone_6x6[ELEM3];
     bunker_block_sprite[ELEM4] &= sprite_bunker_lower_right_gone_6x6[ELEM4];
     bunker_block_sprite[ELEM5] &= sprite_bunker_lower_right_gone_6x6[ELEM5];
-    
-    //print twice
-    hdmi_draw_sprite(bunker_block_sprite, BUNKER_BLOCK_SIZE, BUNKER_BLOCK_SIZE, SCALE, fore2, back, y, x);
+
+    // print twice
+    hdmi_draw_sprite(bunker_block_sprite, BUNKER_BLOCK_SIZE, BUNKER_BLOCK_SIZE,
+                     SCALE, fore2, back, y, x);
     x += BUNKER_BLOCK_SIZE * SCALE;
 
     // cut off part of the sprite to make it the right shape
@@ -134,8 +136,9 @@ void bunkers_print_damaged_block(uint8_t bunker, enum bunker_area_t bunker_area,
     bunker_block_sprite[ELEM5] &= sprite_bunker_lower_left_gone_6x6[ELEM5];
   }
 
-  //print damaged bunker
-  hdmi_draw_sprite(bunker_block_sprite, BUNKER_BLOCK_SIZE, BUNKER_BLOCK_SIZE, SCALE, fore2, back, y, x);
+  // print damaged bunker
+  hdmi_draw_sprite(bunker_block_sprite, BUNKER_BLOCK_SIZE, BUNKER_BLOCK_SIZE,
+                   SCALE, fore2, back, y, x);
 }
 
 // called when a section of a bunker is hit
@@ -154,45 +157,44 @@ void bunkers_hit(uint8_t bunker_num, enum bunker_area_t bunker_area) {
   uint16_t y_offset = 0;
 
   // set y offset
-  if (bunker_area == MID_1 ||
-      bunker_area == MID_2 ||
-      bunker_area == MID_3) {
+  if (bunker_area == MID_1 || bunker_area == MID_2 || bunker_area == MID_3) {
     y_offset = BUNKER_BLOCK_SIZE * SCALE;
-  }
-  else if (bunker_area == BOT_1 ||
-           bunker_area == BOT_2) {
-    y_offset =  BUNKER_BLOCK_SIZE * SCALE + BUNKER_BLOCK_SIZE * SCALE;
+  } else if (bunker_area == BOT_1 || bunker_area == BOT_2) {
+    y_offset = BUNKER_BLOCK_SIZE * SCALE + BUNKER_BLOCK_SIZE * SCALE;
   }
 
   // set x offset
   if (bunker_area <= TOP_4) {
     x_offset = bunker_area * BUNKER_BLOCK_SIZE * SCALE;
-  }
-  else if (bunker_area == MID_2) {
+  } else if (bunker_area == MID_2) {
     x_offset = BUNKER_BLOCK_SIZE * SCALE;
-  }
-  else if (bunker_area == MID_3) {
+  } else if (bunker_area == MID_3) {
     x_offset = 3 * BUNKER_BLOCK_SIZE * SCALE;
-  }
-  else if (bunker_area == BOT_2) {
+  } else if (bunker_area == BOT_2) {
     x_offset = 3 * BUNKER_BLOCK_SIZE * SCALE;
   }
 
-  bunkers_print_damaged_block(bunker_num, bunker_area, y_pos + y_offset, x_pos + x_offset);
+  bunkers_print_damaged_block(bunker_num, bunker_area, y_pos + y_offset,
+                              x_pos + x_offset);
 }
 
 // draw the bunkers and refill their lives
 void bunkers_init() {
 
-  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2, back, BUNKER_Y_POS, BUNKER_1_X_POS);
-  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2, back, BUNKER_Y_POS, BUNKER_2_X_POS);
-  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2, back, BUNKER_Y_POS, BUNKER_3_X_POS);
-  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2, back, BUNKER_Y_POS, BUNKER_4_X_POS);
+  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2,
+                   back, BUNKER_Y_POS, BUNKER_1_X_POS);
+  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2,
+                   back, BUNKER_Y_POS, BUNKER_2_X_POS);
+  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2,
+                   back, BUNKER_Y_POS, BUNKER_3_X_POS);
+  hdmi_draw_sprite(sprite_bunker_24x18, BUNKER_LEN, BUNKER_HEIGHT, SCALE, fore2,
+                   back, BUNKER_Y_POS, BUNKER_4_X_POS);
 
   // for each bunker
   for (uint8_t bunker = 0; bunker < NUM_BUNKERS; ++bunker) {
     // for each block
-    for (uint8_t bunker_area = 0; bunker_area < NUM_BUNKER_AREAS; ++bunker_area) {
+    for (uint8_t bunker_area = 0; bunker_area < NUM_BUNKER_AREAS;
+         ++bunker_area) {
       bunkers[bunker].lives[bunker_area] = BUNKER_LIVES;
     }
   }
@@ -209,56 +211,52 @@ bool bunkers_collision(uint16_t bullet_x, uint16_t bullet_y) {
     for (uint8_t area_x = 0; area_x < BUNKER_LENGTH_BLOCKS; ++area_x) {
       // for each row
       for (uint8_t area_y = 0; area_y < BUNKER_HEIGHT_BLOCKS; ++area_y) {
-        
+
         enum bunker_area_t bunker_area = NONE;
         // check the row of the block
         if (area_y == BUNKER_ROW0) {
           // check the column of the block
           if (area_x == BUNKER_COL0) {
             bunker_area = TOP_1;
-          }
-          else if (area_x == BUNKER_COL1) {
+          } else if (area_x == BUNKER_COL1) {
             bunker_area = TOP_2;
-          }
-          else if (area_x == BUNKER_COL2) {
+          } else if (area_x == BUNKER_COL2) {
             bunker_area = TOP_3;
-          }
-          else if (area_x == BUNKER_COL3) {
+          } else if (area_x == BUNKER_COL3) {
             bunker_area = TOP_4;
           }
-        }
-        else if (area_y == BUNKER_ROW1) {
+        } else if (area_y == BUNKER_ROW1) {
           // check the column of the block
           if (area_x == BUNKER_COL0) {
             bunker_area = MID_1;
-          }
-          else if (area_x == BUNKER_COL1 || area_x == BUNKER_COL2) {
+          } else if (area_x == BUNKER_COL1 || area_x == BUNKER_COL2) {
             bunker_area = MID_2;
-          }
-          else if (area_x == BUNKER_COL3) {
+          } else if (area_x == BUNKER_COL3) {
             bunker_area = MID_3;
           }
-        }
-        else if (area_y == BUNKER_ROW2) {
+        } else if (area_y == BUNKER_ROW2) {
           // check the column of the block
           if (area_x == BUNKER_COL0) {
             bunker_area = BOT_1;
-          }
-          else if (area_x == BUNKER_COL3) {
+          } else if (area_x == BUNKER_COL3) {
             bunker_area = BOT_2;
           }
         }
 
         // if the bullet landed in a bunker area and the bunker has lives
-        if (bunker_area != NONE && bunkers[bunker].lives[bunker_area] > 0)
-        {
-          uint16_t x_min = bunker *  BUNKER_DISTANCE + area_x * BUNKER_BLOCK_SIZE * SCALE - 2 * SCALE + BUNKER_1_X_POS;
-          uint16_t x_max = bunker *  BUNKER_DISTANCE + area_x * BUNKER_BLOCK_SIZE * SCALE + 6 * SCALE + BUNKER_1_X_POS;
+        if (bunker_area != NONE && bunkers[bunker].lives[bunker_area] > 0) {
+          uint16_t x_min = bunker * BUNKER_DISTANCE +
+                           area_x * BUNKER_BLOCK_SIZE * SCALE - 2 * SCALE +
+                           BUNKER_1_X_POS;
+          uint16_t x_max = bunker * BUNKER_DISTANCE +
+                           area_x * BUNKER_BLOCK_SIZE * SCALE + 6 * SCALE +
+                           BUNKER_1_X_POS;
           uint16_t y_min = BUNKER_Y_POS + area_y * BUNKER_BLOCK_SIZE * SCALE;
           uint16_t y_max = y_min + BUNKER_BLOCK_SIZE * SCALE;
 
           // if the bullet hit the bunker
-          if (bullet_x >= x_min && bullet_x <= x_max && (BULLET_OFFSET + bullet_y) >= y_min && bullet_y <= y_max) {
+          if (bullet_x >= x_min && bullet_x <= x_max &&
+              (BULLET_OFFSET + bullet_y) >= y_min && bullet_y <= y_max) {
             bunkers_hit(bunker, bunker_area);
             return true;
           }
@@ -283,7 +281,7 @@ void bunkers_tick() {
       bullet_set_player_bullet_collide();
     }
 
-    // for each alien bullet 
+    // for each alien bullet
     for (uint8_t bullet = 0; bullet < ALIEN_BULLETS; ++bullet) {
       bullet_get_alien_bullet_coordinates(&bullet_x, &bullet_y, bullet);
       // if the alien bullet hit a bunker

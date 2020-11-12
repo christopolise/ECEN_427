@@ -1,21 +1,21 @@
-#include <stdint.h>
-#include <stdio.h>
+#include "alien_march.h"
+#include "bullet.h"
+#include "bunkers.h"
 #include "button_debouncer.h"
-#include "hdmi.h"
+#include "flying_alien.h"
 #include "game_over.h"
 #include "globals.h"
-#include "world.h"
+#include "hdmi.h"
 #include "player.h"
-#include "alien_march.h"
-#include "bunkers.h"
-#include "flying_alien.h"
+#include "world.h"
 #include <buttons/buttons.h>
 #include <intc/intc.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <switches/switches.h>
 #include <system.h>
-#include <stdlib.h>
 #include <time.h>
-#include "bullet.h"
 
 #define EXIT_ERROR -1
 #define LOAD_SUCCESS 0
@@ -53,12 +53,12 @@ bool init() {
     return false;
   }
 
-  globals_init(); // init global SM
-  world_init(); // init world
-  bullet_init(); // init bullets
+  globals_init();     // init global SM
+  world_init();       // init world
+  bullet_init();      // init bullets
   alien_march_init(); // init alien march
-  bunkers_init(); // init bunkers
-  player_init(); //init player
+  bunkers_init();     // init bunkers
+  player_init();      // init player
 
   // Enable interrupt output from buttons
   buttons_enable_interrupts();
@@ -78,13 +78,12 @@ int main() {
   srand(time(NULL));
 
   // main event loop
-  while(!globals_get_game_over())
-  {
-     // Call interrupt controller function to wait for interrupt
+  while (!globals_get_game_over()) {
+    // Call interrupt controller function to wait for interrupt
     uint32_t interrupts = intc_wait_for_interrupt();
     switches_ack_interrupt();
 
-    //true every 10 ms
+    // true every 10 ms
     if (interrupts & SYSTEM_INTC_IRQ_FIT_MASK) {
       button_debouncer_tick();
       player_tick();
@@ -113,7 +112,6 @@ int main() {
   intc_exit();
   buttons_exit();
   switches_exit();
-  
 
   return 0;
 }

@@ -1,12 +1,12 @@
 #include "sounds.h"
 #include "globals.h"
-#include <buttons/buttons.h>
-#include <switches/switches.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <sys/ioctl.h>
 #include <audio_config/audio_config.h>
+#include <buttons/buttons.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <switches/switches.h>
+#include <sys/ioctl.h>
 
 enum soundVolumeControl {
   init_st,           // Machine is disabled
@@ -43,13 +43,13 @@ static uint8_t vol_level = VOL_LEVEL_START;
 
 char *audio_files[NUM_OF_SOUND_FX] = {
     "/home/byu/ecen427/userspace/sounds/invader_die.wav",
-    "/home/byu/ecen427/userspace/sounds/laser.wav", 
-    "/home/byu/ecen427/userspace/sounds/player_die.wav", 
-    "/home/byu/ecen427/userspace/sounds/ufo_die.wav", 
+    "/home/byu/ecen427/userspace/sounds/laser.wav",
+    "/home/byu/ecen427/userspace/sounds/player_die.wav",
+    "/home/byu/ecen427/userspace/sounds/ufo_die.wav",
     "/home/byu/ecen427/userspace/sounds/ufo.wav",
-    "/home/byu/ecen427/userspace/sounds/walk1.wav",       
-    "/home/byu/ecen427/userspace/sounds/walk2.wav", 
-    "/home/byu/ecen427/userspace/sounds/walk3.wav",      
+    "/home/byu/ecen427/userspace/sounds/walk1.wav",
+    "/home/byu/ecen427/userspace/sounds/walk2.wav",
+    "/home/byu/ecen427/userspace/sounds/walk3.wav",
     "/home/byu/ecen427/userspace/sounds/walk4.wav"};
 
 int32_t *processed_audio_files[NUM_OF_SOUND_FX] = {
@@ -83,16 +83,12 @@ void process_sounds(char *wavFile, int32_t *processed_audio, int *bytes_read) {
   close(audio_fd);
 }
 
-bool sounds_is_available()
-{
+bool sounds_is_available() {
   int garbage_size = 1;
   char garbage_buf[2];
-  if(read(fd, garbage_buf, garbage_size))
-  {
+  if (read(fd, garbage_buf, garbage_size)) {
     return false;
-  }
-  else
-  {
+  } else {
     return true;
   }
 }
@@ -117,7 +113,8 @@ int8_t sounds_init(char *devFile) {
 }
 
 void sounds_play(uint8_t sound) {
-  int status_write = write(fd, processed_audio_files[sound], bytes_recvd[sound]);
+  int status_write =
+      write(fd, processed_audio_files[sound], bytes_recvd[sound]);
   if (status_write == -1) {
     printf("ERROR playing the wav file\n");
     exit(-1);
@@ -170,7 +167,7 @@ void sounds_tick() {
   case wait_for_input_st:
     break;
   case adjust_vol_st:
-  
+
     (switches & SWITCHES_0_MASK) ? vol_level++ : vol_level--;
     audio_config_set_volume(vol_level);
 
