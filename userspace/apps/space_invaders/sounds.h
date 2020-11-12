@@ -1,8 +1,8 @@
 #ifndef __SOUNDS_H__
 #define __SOUNDS_H__
 
-#include <stdbool.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,18 +21,31 @@
 #define SOUNDS_WALK4_INDX 8
 #define SOUNDS_DEVICE_FILE "/dev/ecen427_audio"
 
+// Returns whether a sound is currently playing or not and whether it is
+// available
 bool sounds_is_available();
 
+// Initializes the sound driver for userspace
+// @param devFile - string that contains device file path
+// RETURN: Status of action
 int8_t sounds_init(char *devFile);
 
+// Function that plays desired sound from wave array
+// @param sound - integer indicating the number of file to be played
 void sounds_play(uint8_t sound);
 
+// Toggle whether driver loops or unloops sample being played
+// @param enable - indicates whether or not to loop
 void sounds_toggle_looping(bool enable);
 
+// Returns whether or not the driver is looping the sounds
 bool sounds_is_looping();
 
+// Succesfully closes the userspace instance of the driver file
+// @param fd - file descriptor of device driver file
 void sounds_exit(int fd);
 
+// Executed on every tick to manage sound functions
 void sounds_tick();
 
 #endif

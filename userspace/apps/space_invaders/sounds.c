@@ -38,9 +38,16 @@ static int32_t sounds_walk4[SOUND_FX_MAX_SIZE];
 #define AUDIO_IOC_DISABLE_LOOP _IO(AUDIO_IOC_MAGIC, 1)
 #define SOUNDS_SUCCESS 0
 #define VOL_LEVEL_START 31
+#define INVALID_SIZE -1
+#define HEADER_SIZE 44
+#define SAMPLE_CONVERSION_FACTOR 2
+#define SAMPLE_SHIFT_AMNT 8
+#define GARBAGE_BUF_SIZE 2
+#define SOUND_PLAYER_ERROR -1
 
 static uint8_t vol_level = VOL_LEVEL_START;
 
+// Array contains all the filepaths for the sound
 char *audio_files[NUM_OF_SOUND_FX] = {
     "/home/byu/ecen427/userspace/sounds/invader_die.wav",
     "/home/byu/ecen427/userspace/sounds/laser.wav",
@@ -52,40 +59,58 @@ char *audio_files[NUM_OF_SOUND_FX] = {
     "/home/byu/ecen427/userspace/sounds/walk3.wav",
     "/home/byu/ecen427/userspace/sounds/walk4.wav"};
 
+// Array contains all processed audio snippets
 int32_t *processed_audio_files[NUM_OF_SOUND_FX] = {
     sounds_invader_die, sounds_laser, sounds_player_die,
     sounds_ufo_die,     sounds_ufo,   sounds_walk1,
     sounds_walk2,       sounds_walk3, sounds_walk4};
 
-int bytes_recvd[NUM_OF_SOUND_FX] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+// Initialize all vals to invalid, array contains all files' size
+int bytes_recvd[NUM_OF_SOUND_FX] = {INVALID_SIZE, INVALID_SIZE, INVALID_SIZE,
+                                    INVALID_SIZE, INVALID_SIZE, INVALID_SIZE,
+                                    INVALID_SIZE, INVALID_SIZE, INVALID_SIZE};
 
+// Converts the sounds from 16 to 24 bps sample rate for correct playing
+// @param wavFile - file to be processed
+// @param processed_audio - output processed buffer
+// @param bytes_read - pointer to update the size of processed_audio in
+// corresponding array
 void process_sounds(char *wavFile, int32_t *processed_audio, int *bytes_read) {
   int raw_audio[SOUND_FX_MAX_SIZE];
   int audio_fd; // Audio file filp
   audio_fd = open(wavFile, O_RDWR);
+
+  // If there is an issue opening the WAVE file
   if (audio_fd == AUDIO_OPEN_ERROR) {
     printf("Error opening wav file\n");
     exit(AUDIO_OPEN_ERROR);
   }
-  lseek(audio_fd, 44, SEEK_SET); // Just skipping headers
+  lseek(audio_fd, HEADER_SIZE, SEEK_SET); // Just skipping headers
 
   *bytes_read = read(audio_fd, raw_audio, SOUND_FX_MAX_SIZE * sizeof(int16_t));
-  if (*bytes_read == -1) {
+
+  // If the file was not processed properly
+  if (*bytes_read == INVALID_SIZE) {
     printf("ERROR reading the wav file\n");
-    exit(-1);
+    exit(SOUND_PLAYER_ERROR);
   }
 
-  for (uint16_t i = 0; i < *bytes_read / 2; i++) {
+  // For all samples in the file, shift over to compensate for size increase
+  for (uint16_t i = 0; i < *bytes_read / SAMPLE_CONVERSION_FACTOR; i++) {
     processed_audio[i] = raw_audio[i];
-    processed_audio[i] <<= 8;
+    processed_audio[i] <<= SAMPLE_SHIFT_AMNT;
   }
 
   close(audio_fd);
 }
 
+// Returns whether a sound is currently playing or not and whether it is
+// available
 bool sounds_is_available() {
-  int garbage_size = 1;
-  char garbage_buf[2];
+  int garbage_size = GARBAGE_BUF_SIZE;
+  char garbage_buf[GARBAGE_BUF_SIZE];
+
+  // If there is data, its busy, else its free
   if (read(fd, garbage_buf, garbage_size)) {
     return false;
   } else {
@@ -93,8 +118,13 @@ bool sounds_is_available() {
   }
 }
 
+// Initializes the sound driver for userspace
+// @param devFile - string that contains device file path
+// RETURN: Status of action
 int8_t sounds_init(char *devFile) {
   fd = open(devFile, O_RDWR);
+
+  // If there is a problem opening the device
   if (fd == SOUNDS_OPEN_ERROR) {
     // Upon error returned by open, we exit function with similar error and
     // print out a msg to user
@@ -104,6 +134,7 @@ int8_t sounds_init(char *devFile) {
 
   audio_config_init();
 
+  // Process all the sounds to be used for the game and puts them in temp memory
   for (uint8_t i = 0; i < NUM_OF_SOUND_FX; i++)
     process_sounds(audio_files[i], processed_audio_files[i], &bytes_recvd[i]);
 
@@ -112,23 +143,33 @@ int8_t sounds_init(char *devFile) {
   return SOUNDS_SUCCESS;
 }
 
+// Function that plays desired sound from wave array
+// @param sound - integer indicating the number of file to be played
 void sounds_play(uint8_t sound) {
   int status_write =
       write(fd, processed_audio_files[sound], bytes_recvd[sound]);
-  if (status_write == -1) {
+
+  // If the playing was unsuccessful, emergency exit
+  if (status_write == INVALID_SIZE) {
     printf("ERROR playing the wav file\n");
-    exit(-1);
+    exit(SOUND_PLAYER_ERROR);
   }
 }
 
+// Toggle whether driver loops or unloops sample being played
+// @param enable - indicates whether or not to loop
 void sounds_toggle_looping(bool enable) {
   ioctl(fd, enable ? AUDIO_IOC_ENABLE_LOOP : AUDIO_IOC_DISABLE_LOOP);
   globals_setLooping(enable);
 }
 
+// Returns whether or not the driver is looping the sounds
 bool sounds_is_looping() { return globals_isLooping(); }
 
+// Succesfully closes the userspace instance of the driver file
+// @param fd - file descriptor of device driver file
 void sounds_exit(int fd) {
+  // If there is an error exiting from the driver file, emergency exit
   if (close(fd) == SOUNDS_CLOSE_ERROR) {
     // If there is an issue closing the hdmi device file
     // Prints error message and exits with error code
@@ -137,6 +178,7 @@ void sounds_exit(int fd) {
   }
 }
 
+// Executed on every tick to manage sound functions
 void sounds_tick() {
 
   uint32_t buttons = buttons_read();
@@ -145,10 +187,13 @@ void sounds_tick() {
   // Mealy Actions
   switch (currentSoundsHandler) {
   case init_st:
+    // if the state machine has been properly initialized
     if (enable_volume_control)
       currentSoundsHandler = wait_for_input_st;
     break;
   case wait_for_input_st:
+
+    // If the button to change volume is pressed
     if (buttons & BUTTONS_3_MASK) {
       currentSoundsHandler = adjust_vol_st;
     }
@@ -168,7 +213,12 @@ void sounds_tick() {
     break;
   case adjust_vol_st:
 
-    (switches & SWITCHES_0_MASK) ? vol_level++ : vol_level--;
+    // If the switch 0 is the the up or down position, incdec accordingly
+    if (switches & SWITCHES_0_MASK && buttons & BUTTONS_3_MASK) {
+      vol_level++;
+    } else {
+      vol_level--;
+    }
     audio_config_set_volume(vol_level);
 
     break;

@@ -61,14 +61,19 @@ bool globals_isWalkPlayed() { return walkIsPlaying; }
 
 bool globals_isLooping() { return soundIsLooping; }
 
+// Returns whether an explosion is playing or not
 void globals_setExplosionPlaying(bool enable) { explosionIsPlaying = enable; }
 
+// Returns whether saucer noise is enabled
 void globals_setSaucerPlaying(bool enable) { saucerIsPlaying = enable; }
 
+// Returns whether bullet sound is playing
 void globals_setBulletPlaying(bool enable) { bulletIsPlaying = enable; }
 
+// Returns whether the walks are being played
 void globals_setWalkPlaying(bool enable) { walkIsPlaying = enable; }
 
+// Returns whether audio is looping or not
 void globals_setLooping(bool enable) { soundIsLooping = enable; }
 
 // Setter that can be called externally to cause game to end

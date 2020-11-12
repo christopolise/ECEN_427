@@ -28,16 +28,34 @@ uint8_t globals_getLives();
 // @param - lives is a uint8_t for the new value of global_lives
 void globals_setLives(uint8_t lives);
 
+// Returns whether an explosion is playing or not
 bool globals_isExplosionPlayed();
+
+// Returns whether saucer noise is enabled
 bool globals_isSaucerPlayed();
+
+// Returns whether bullet sound is playing
 bool globals_isBulletPlayed();
+
+// Returns whether the walks are being played
 bool globals_isWalkPlayed();
+
+// Returns whether audio is looping or not
 bool globals_isLooping();
 
+// Setter for indicating explosion is playing
 void globals_setExplosionPlaying(bool enable);
+
+// Setter for indicating whether saucer is really on screen
 void globals_setSaucerPlaying(bool enable);
+
+// Setter for indicating whether bullet sound is playing
 void globals_setBulletPlaying(bool enable);
+
+// Setter for indicating whether the walking sounds are playing
 void globals_setWalkPlaying(bool enable);
+
+// Setter for enabling or disabling looping
 void globals_setLooping(bool enable);
 
 // Runs all necessary flag assignments and default values for the handling of a

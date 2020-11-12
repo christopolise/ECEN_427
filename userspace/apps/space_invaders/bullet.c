@@ -78,6 +78,7 @@ void bullet_get_player_bullet_coordinates(uint16_t *x_pos, uint16_t *y_pos) {
   *y_pos = play_bullet.pos_y;
 }
 
+// Returns whether the bullet is still on screen
 bool bullet_get_player_bullet_is_alive() { return play_bullet.is_alive; }
 
 // Retreives the coordinates of an alien bullet given an index in the bullet
