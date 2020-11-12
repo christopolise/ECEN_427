@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "hdmi.h"
+#include "sounds.h"
 #include "sprites.h"
 #include <stdlib.h>
 
@@ -115,6 +116,7 @@ void globals_setLives(uint8_t lives) {
   // Trigger a game over event if lives hits zero
   if (!globals_lives) {
     gameOver = true;
+    sounds_toggle_looping(false);
     return;
   }
 }

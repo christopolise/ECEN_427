@@ -61,15 +61,6 @@ void flying_alien_tick() {
     is_gone = false;
   }
 
-  if (!globals_isBulletPlayed() && !globals_isExplosionPlayed() &&
-      sounds_is_available()) {
-    sounds_toggle_looping(true);
-    sounds_play(SOUNDS_UFO_INDX);
-  }
-  else
-  {
-    sounds_toggle_looping(false);
-  }
 
   // check x position
   if (alien_pos_x > HDMI_DISPLAY_WIDTH - RIGHT_OFFSET) {
@@ -91,6 +82,15 @@ void flying_alien_tick() {
   }
   // if the saucer is still on the screen
   if (!is_gone) {
+      if (!globals_isBulletPlayed() && !globals_isExplosionPlayed() &&
+      sounds_is_available()) {
+    sounds_toggle_looping(true);
+    sounds_play(SOUNDS_UFO_INDX);
+  }
+  else
+  {
+    sounds_toggle_looping(false);
+  }
     // check the direction of the saucer
     if (is_going_right) {
       alien_pos_x += SAUCER_STEP;

@@ -199,13 +199,13 @@ bool alien_collision(uint16_t bullet_x, uint16_t bullet_y) {
           if (row == ROW3 || row == ROW4) {
             globals_setScore(globals_getScore() + ALIEN1_SCORE);
           }
-          if (sounds_is_available()) {
+          // if (sounds_is_available()) {
             sounds_toggle_looping(false);
 
             globals_setExplosionPlaying(true);
             sounds_play(SOUNDS_INVADER_DIE_INDX);
             globals_setExplosionPlaying(false);
-          }
+          // }
           return true;
         }
       }

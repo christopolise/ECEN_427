@@ -6,6 +6,7 @@
 #include "game_over.h"
 #include "globals.h"
 #include "hdmi.h"
+#include "sounds.h"
 #include "player.h"
 #include "world.h"
 #include <buttons/buttons.h>
@@ -92,6 +93,7 @@ int main() {
       alien_march_tick();
       flying_alien_tick();
       bunkers_tick();
+      sounds_tick();
     }
     // do nothing for switches
     if (interrupts & SYSTEM_INTC_IRQ_BUTTONS_MASK) {

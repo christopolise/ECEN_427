@@ -23,6 +23,7 @@
 #define TANK_COL_B 0xBF
 #define BULLET_LENGTH 5
 #define ALIEN_BULLET_WIDTH 3
+#define SOUND_TRIGGER 1
 
 typedef struct player_tank_t {
   uint16_t pos_x;
@@ -234,7 +235,7 @@ void player_tick() {
     // If the duration of explosion animation has maxed out, reset counters,
     // tank position, and flags, go to init
 
-    if (explosion_counter == 1) {
+    if (explosion_counter == SOUND_TRIGGER) {
       sounds_toggle_looping(false);
       globals_setExplosionPlaying(true);
       sounds_play(SOUNDS_PLAYER_DIE_INDX);

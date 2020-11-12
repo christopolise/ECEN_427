@@ -16,6 +16,7 @@ enum soundVolumeControl {
 
 static int fd;
 static bool enable_volume_control = false;
+static uint32_t enablePress = 0;
 
 static int32_t sounds_invader_die[SOUND_FX_MAX_SIZE];
 static int32_t sounds_laser[SOUND_FX_MAX_SIZE];
@@ -44,8 +45,12 @@ static int32_t sounds_walk4[SOUND_FX_MAX_SIZE];
 #define SAMPLE_SHIFT_AMNT 8
 #define GARBAGE_BUF_SIZE 2
 #define SOUND_PLAYER_ERROR -1
+#define MAX_ENABLE_WAIT 5
+#define MAX_VOL 63
+#define MIN_VOL 0
+#define RESET_CNT 0
 
-static uint8_t vol_level = VOL_LEVEL_START;
+static int8_t vol_level = VOL_LEVEL_START;
 
 // Array contains all the filepaths for the sound
 char *audio_files[NUM_OF_SOUND_FX] = {
@@ -192,11 +197,15 @@ void sounds_tick() {
       currentSoundsHandler = wait_for_input_st;
     break;
   case wait_for_input_st:
-
+  if(enablePress > MAX_ENABLE_WAIT)
+  {
     // If the button to change volume is pressed
     if (buttons & BUTTONS_3_MASK) {
       currentSoundsHandler = adjust_vol_st;
     }
+  }
+
+    
     break;
   case adjust_vol_st:
     currentSoundsHandler = wait_for_input_st;
@@ -210,16 +219,27 @@ void sounds_tick() {
   case init_st:
     break;
   case wait_for_input_st:
+  enablePress++;
     break;
   case adjust_vol_st:
 
     // If the switch 0 is the the up or down position, incdec accordingly
     if (switches & SWITCHES_0_MASK && buttons & BUTTONS_3_MASK) {
       vol_level++;
+      if(vol_level == MAX_VOL + 1)
+      {
+        vol_level = MAX_VOL;
+      }
     } else {
       vol_level--;
+      if(vol_level == MIN_VOL - 1)
+      {
+        vol_level = MIN_VOL;
+      }
     }
+    printf("Vol level: %i\n", vol_level);
     audio_config_set_volume(vol_level);
+    enablePress = RESET_CNT;
 
     break;
   default:
