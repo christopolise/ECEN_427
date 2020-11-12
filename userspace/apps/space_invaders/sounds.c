@@ -68,14 +68,12 @@ void process_sounds(char *wavFile, int32_t *processed_audio, int *bytes_read) {
     exit(AUDIO_OPEN_ERROR);
   }
   lseek(audio_fd, 44, SEEK_SET); // Just skipping headers
-  printf("Opened WAV file successfully\n");
 
   *bytes_read = read(audio_fd, raw_audio, SOUND_FX_MAX_SIZE * sizeof(int16_t));
   if (*bytes_read == -1) {
     printf("ERROR reading the wav file\n");
     exit(-1);
   }
-  printf("Bytes read: %d\n", *bytes_read);
 
   for (uint16_t i = 0; i < *bytes_read / 2; i++) {
     processed_audio[i] = raw_audio[i];
@@ -105,7 +103,6 @@ int8_t sounds_init(char *devFile) {
 }
 
 void sounds_play(uint8_t sound) {
-  printf("Sounds size: %d\n", bytes_recvd[sound]);
   int status_write = write(fd, processed_audio_files[sound], bytes_recvd[sound]);
   if (status_write == -1) {
     printf("ERROR playing the wav file\n");

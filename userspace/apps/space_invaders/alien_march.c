@@ -45,6 +45,8 @@ static char back[COLOR_ARRAY_SIZE] = {0x00, 0x00, 0x00};
 static int8_t alien_to_erase_x = ERROR;
 static int8_t alien_to_erase_y = ERROR;
 
+static uint8_t progress = 0;
+
 struct alien_t {
   uint16_t pos_x;
   uint16_t pos_y;
@@ -182,6 +184,7 @@ bool alien_march_all_dead() {
 // tick function for the marching aliens
 void alien_march_tick() {
   static uint8_t cnt = 0U;
+  
   ++cnt;
   // slowly move the aliens
   if (cnt == ALIEN_MARCH_SPEED) {
@@ -230,6 +233,18 @@ void alien_march_tick() {
           aliens.aliens[col][row].pos_x -= ALIEN_STEP_SIZE;
         }
         aliens.aliens[col][row].pos_y += y_change;
+      }
+    }
+
+    if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !globals_isSaucerPlayed())
+    {
+      globals_setWalkPlaying(true);
+      sounds_play(SOUNDS_WALK1_INDX + progress);
+      globals_setWalkPlaying(false);
+      progress++;
+      if(progress == 4)
+      {
+        progress = 0;
       }
     }
 
