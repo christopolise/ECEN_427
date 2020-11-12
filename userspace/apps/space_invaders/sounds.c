@@ -197,15 +197,13 @@ void sounds_tick() {
       currentSoundsHandler = wait_for_input_st;
     break;
   case wait_for_input_st:
-  if(enablePress > MAX_ENABLE_WAIT)
-  {
-    // If the button to change volume is pressed
-    if (buttons & BUTTONS_3_MASK) {
-      currentSoundsHandler = adjust_vol_st;
+    if (enablePress > MAX_ENABLE_WAIT) {
+      // If the button to change volume is pressed
+      if (buttons & BUTTONS_3_MASK) {
+        currentSoundsHandler = adjust_vol_st;
+      }
     }
-  }
 
-    
     break;
   case adjust_vol_st:
     currentSoundsHandler = wait_for_input_st;
@@ -219,21 +217,19 @@ void sounds_tick() {
   case init_st:
     break;
   case wait_for_input_st:
-  enablePress++;
+    enablePress++;
     break;
   case adjust_vol_st:
 
     // If the switch 0 is the the up or down position, incdec accordingly
     if (switches & SWITCHES_0_MASK && buttons & BUTTONS_3_MASK) {
       vol_level++;
-      if(vol_level == MAX_VOL + 1)
-      {
+      if (vol_level == MAX_VOL + 1) {
         vol_level = MAX_VOL;
       }
     } else {
       vol_level--;
-      if(vol_level == MIN_VOL - 1)
-      {
+      if (vol_level == MIN_VOL - 1) {
         vol_level = MIN_VOL;
       }
     }
