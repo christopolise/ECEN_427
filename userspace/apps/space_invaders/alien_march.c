@@ -37,6 +37,7 @@
 #define BULLET_OFFSET 10
 #define BUNKER_Y_POS 350
 #define BULLET_WAIT 10
+#define WALK_SND_MAX 4
 
 static char fore[COLOR_ARRAY_SIZE] = {0xff, 0xff, 0xff};
 static char back[COLOR_ARRAY_SIZE] = {0x00, 0x00, 0x00};
@@ -199,13 +200,13 @@ bool alien_collision(uint16_t bullet_x, uint16_t bullet_y) {
           if (row == ROW3 || row == ROW4) {
             globals_setScore(globals_getScore() + ALIEN1_SCORE);
           }
-          // if (sounds_is_available()) {
+
           sounds_toggle_looping(false);
 
           globals_setExplosionPlaying(true);
           sounds_play(SOUNDS_INVADER_DIE_INDX);
           globals_setExplosionPlaying(false);
-          // }
+
           return true;
         }
       }
@@ -284,6 +285,7 @@ void alien_march_tick() {
       }
     }
 
+    // If the time is right and all are not dead, make the waling sounds
     if (!globals_isExplosionPlayed() && !globals_isBulletPlayed() &&
         !globals_isSaucerPlayed() && sounds_is_available()) {
       sounds_toggle_looping(false);
@@ -291,7 +293,8 @@ void alien_march_tick() {
       sounds_play(SOUNDS_WALK1_INDX + progress);
       globals_setWalkPlaying(false);
       progress++;
-      if (progress == 4) {
+      // If we've hit the last walk sound, loop back to beginning
+      if (progress == WALK_SND_MAX) {
         progress = 0;
       }
     }

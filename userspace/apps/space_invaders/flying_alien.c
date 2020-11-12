@@ -81,6 +81,8 @@ void flying_alien_tick() {
   }
   // if the saucer is still on the screen
   if (!is_gone) {
+
+    // If the saucer is on the screen then play the noise on a loop
     if (!globals_isBulletPlayed() && !globals_isExplosionPlayed() &&
         sounds_is_available()) {
       sounds_toggle_looping(true);

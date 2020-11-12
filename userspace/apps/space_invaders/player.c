@@ -207,6 +207,8 @@ void player_tick() {
     // If fire button is pressed, go to fire state
     if (buttons & BUTTONS_0_MASK) {
       currentPlayerHandler = fire_st;
+
+      // If no other important sounds are playing, play bullet fire
       if (!globals_isExplosionPlayed() && !globals_isBulletPlayed() &&
           !bullet_get_player_bullet_is_alive()) {
         sounds_toggle_looping(false);
@@ -235,6 +237,7 @@ void player_tick() {
     // If the duration of explosion animation has maxed out, reset counters,
     // tank position, and flags, go to init
 
+    // If there was a kill, wait till we are certain and blow up sound
     if (explosion_counter == SOUND_TRIGGER) {
       sounds_toggle_looping(false);
       globals_setExplosionPlaying(true);
