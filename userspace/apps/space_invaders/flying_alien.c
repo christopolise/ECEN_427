@@ -60,6 +60,12 @@ void flying_alien_tick() {
     is_gone = false;
   }
 
+  if(!globals_isBulletPlayed() && !globals_isExplosionPlayed() && sounds_is_available())
+  {
+    sounds_toggle_looping(true);
+    sounds_play(SOUNDS_UFO_INDX);
+  }
+
   // check x position
   if (alien_pos_x > HDMI_DISPLAY_WIDTH - RIGHT_OFFSET) {
     alien_pos_x = HDMI_DISPLAY_WIDTH - RIGHT_OFFSET;
@@ -99,6 +105,7 @@ void flying_alien_tick() {
   if (saucer_collision(bullet_x, bullet_y)) {
     bullet_set_player_bullet_collide();
     globals_setScore(globals_getScore() + SAUCER_BONUS);
+          sounds_toggle_looping(false);
     sounds_play(SOUNDS_UFO_DIE_INDX);
   }
 }

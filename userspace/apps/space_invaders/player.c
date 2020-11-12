@@ -208,6 +208,7 @@ void player_tick() {
       currentPlayerHandler = fire_st;
       if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !bullet_get_player_bullet_is_alive())
     {
+            sounds_toggle_looping(false);
       globals_setBulletPlaying(true);
       sounds_play(SOUNDS_LASER_INDX);
       globals_setBulletPlaying(false);
@@ -237,6 +238,7 @@ void player_tick() {
     if(explosion_counter ==1)
     {
       printf("SOUND PLAYED\n");
+      sounds_toggle_looping(false);
       globals_setExplosionPlaying(true);
       sounds_play(SOUNDS_PLAYER_DIE_INDX);
       globals_setExplosionPlaying(false);

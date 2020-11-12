@@ -155,6 +155,8 @@ bool alien_collision(uint16_t bullet_x, uint16_t bullet_y) {
             globals_setScore(globals_getScore() + ALIEN1_SCORE);
           }
           if(sounds_is_available()){
+                  sounds_toggle_looping(false);
+
           globals_setExplosionPlaying(true);
           sounds_play(SOUNDS_INVADER_DIE_INDX);
           globals_setExplosionPlaying(false);
@@ -240,6 +242,7 @@ void alien_march_tick() {
 
     if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !globals_isSaucerPlayed() && sounds_is_available())
     {
+            sounds_toggle_looping(false);
       globals_setWalkPlaying(true);
       sounds_play(SOUNDS_WALK1_INDX + progress);
       globals_setWalkPlaying(false);
