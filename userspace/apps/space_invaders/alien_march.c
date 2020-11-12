@@ -1,5 +1,6 @@
 #include "alien_march.h"
 #include "sprites.h"
+#include "sounds.h"
 #include "hdmi.h"
 #include "bullet.h"
 #include <stdint.h>
@@ -151,6 +152,9 @@ bool alien_collision(uint16_t bullet_x, uint16_t bullet_y) {
           if (row == ROW3 || row == ROW4) {
             globals_setScore(globals_getScore() + ALIEN1_SCORE);
           }
+          globals_setExplosionPlaying(true);
+          sounds_play(SOUNDS_INVADER_DIE_INDX);
+          globals_setExplosionPlaying(false);
           return true;
         }
       }
