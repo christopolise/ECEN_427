@@ -34,6 +34,8 @@ void bullet_set_alien_bullet_collide(uint8_t num_of_alien);
 // with something
 void bullet_set_player_bullet_collide();
 
+bool bullet_get_player_bullet_is_alive();
+
 // Lets the caller set the coordinates of the player bullet
 // @param - x_pos uint16_t that is part of the new player coordinate
 // @param - y_pos uint16_t that is part of the new player coordinate

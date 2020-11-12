@@ -75,6 +75,10 @@ void bullet_get_player_bullet_coordinates(uint16_t *x_pos, uint16_t *y_pos) {
     *y_pos = play_bullet.pos_y;
 }
 
+bool bullet_get_player_bullet_is_alive(){
+    return play_bullet.is_alive;
+}
+
 // Retreives the coordinates of an alien bullet given an index in the bullet array
 // @param - x_pos is uint16_t * that will receive x-coordinate of bullet
 // @param - y_pos is uint16_t * that will receive y-coordinate of bullet

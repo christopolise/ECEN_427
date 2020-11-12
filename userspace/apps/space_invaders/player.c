@@ -2,6 +2,7 @@
 #include "bullet.h"
 #include "globals.h"
 #include "sprites.h"
+#include "sounds.h"
 #include <buttons/buttons.h>
 
 #define START_POS_X HDMI_DISPLAY_WIDTH / 2 - 8
@@ -65,7 +66,7 @@ void player_init() {
 // statement will return t/f whether a specific button is pressed
 void move_tank(uint32_t buttons) {
   // If button 3 is one of the buttons pressed
-  if (buttons & BUTTONS_3_MASK) {
+  if (buttons & BUTTONS_2_MASK) {
     // If the tank is at the extreme left of the screen
     if (!player_tank.pos_x) {
       // Keeps the tank stationary and limited
@@ -78,7 +79,7 @@ void move_tank(uint32_t buttons) {
     }
   }
   // If button 2 is one of the buttons pressed
-  else if (buttons & BUTTONS_2_MASK) {
+  else if (buttons & BUTTONS_1_MASK) {
     // If the tanks edge is touching the right end of the screen
     if (player_tank.pos_x == RIGHT_EDGE) {
       // We keep the tank stationary and limited
@@ -205,6 +206,12 @@ void player_tick() {
     // If fire button is pressed, go to fire state
     if (buttons & BUTTONS_0_MASK) {
       currentPlayerHandler = fire_st;
+      if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !bullet_get_player_bullet_is_alive())
+    {
+      globals_setBulletPlaying(true);
+      sounds_play(SOUNDS_LASER_INDX);
+      globals_setBulletPlaying(false);
+    }
     }
     // Go back to waiting for input
     else {
@@ -224,6 +231,16 @@ void player_tick() {
   case hit_received_st: // Have been struck by a bullet
     // If the duration of explosion animation has maxed out, reset counters,
     // tank position, and flags, go to init
+
+    printf("SOUND PLAYED\n");
+    if(explosion_counter ==1)
+    {
+      printf("SOUND PLAYED\n");
+      globals_setExplosionPlaying(true);
+      sounds_play(SOUNDS_PLAYER_DIE_INDX);
+      globals_setExplosionPlaying(false);
+    }
+
     if (explosion_counter == EXPLOSION_CNT_MAX) {
       explosion_counter = CNT_RESET;
       hdmi_draw_sprite(sprite_tank_gone_15x8, TANK_NORM_WIDTH, TANK_HEIGHT,

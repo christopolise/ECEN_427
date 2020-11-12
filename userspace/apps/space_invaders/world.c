@@ -1,5 +1,6 @@
 #include "world.h"
 #include "hdmi.h"
+#include "sounds.h"
 #include "sprites.h"
 #include <string.h>
 
@@ -25,6 +26,7 @@ char tank_color[HDMI_COLOR_FACTOR] = {0x78, 0xB9, 0xBF};
 
 // Responsible for drawing world background
 void world_init() {
+    sounds_init(SOUNDS_DEVICE_FILE);
     hdmi_init(HDMI_DEVICE_FILE);
     hdmi_fill_screen(background);
     hdmi_draw_row(HDMI_DISPLAY_HEIGHT - GRASS_OFFSET, grass);

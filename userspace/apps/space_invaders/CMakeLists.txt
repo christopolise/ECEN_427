@@ -1,6 +1,7 @@
 include_directories(. interfaces)
 
 add_executable(space_invaders main.c 
+                              sounds.c
                               hdmi.c 
                               sprites.c 
                               button_debouncer.c 
@@ -12,6 +13,6 @@ add_executable(space_invaders main.c
                               bunkers.c
                               flying_alien.c
                               bullet.c
-                              sounds.c)
+                              )
 
-target_link_libraries(space_invaders buttons switches intc)
+target_link_libraries(space_invaders buttons switches intc audio_config)

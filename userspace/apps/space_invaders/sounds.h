@@ -1,7 +1,12 @@
 #ifndef __SOUNDS_H__
 #define __SOUNDS_H__
 
-#include <audio_config/audio_config.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #define SOUND_FX_MAX_SIZE 128000
 #define NUM_OF_SOUND_FX 9
@@ -14,20 +19,11 @@
 #define SOUNDS_WALK2_INDX 6
 #define SOUNDS_WALK3_INDX 7
 #define SOUNDS_WALK4_INDX 8
+#define SOUNDS_DEVICE_FILE "/dev/ecen427_audio"
 
-extern int32_t sounds_invader_die[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_laser[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_player_die[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_ufo_die[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_ufo[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_walk1[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_walk2[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_walk3[SOUND_FX_MAX_SIZE];
-extern int32_t sounds_walk4[SOUND_FX_MAX_SIZE];
+int8_t sounds_init(char *devFile);
 
-void sounds_init(char *devFile);
-
-void sounds_play(int32_t *sound);
+void sounds_play(uint8_t sound);
 
 void sounds_toggle_looping(bool enable);
 
