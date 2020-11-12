@@ -194,6 +194,14 @@ void player_tick() {
     // If the fire button is pushed go to fire state
     else if (buttons & BUTTONS_0_MASK) {
       currentPlayerHandler = fire_st;
+      // If no other important sounds are playing, play bullet fire
+      if (!globals_isExplosionPlayed() && !globals_isBulletPlayed() &&
+          !bullet_get_player_bullet_is_alive()) {
+        sounds_toggle_looping(false);
+        globals_setBulletPlaying(true);
+        sounds_play(SOUNDS_LASER_INDX);
+        globals_setBulletPlaying(false);
+      }
     }
     break;
 
