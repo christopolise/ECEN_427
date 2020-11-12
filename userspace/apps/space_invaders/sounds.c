@@ -83,6 +83,20 @@ void process_sounds(char *wavFile, int32_t *processed_audio, int *bytes_read) {
   close(audio_fd);
 }
 
+bool sounds_is_available()
+{
+  int garbage_size = 1;
+  char garbage_buf[2];
+  if(read(fd, garbage_buf, garbage_size))
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
 int8_t sounds_init(char *devFile) {
   fd = open(devFile, O_RDWR);
   if (fd == SOUNDS_OPEN_ERROR) {

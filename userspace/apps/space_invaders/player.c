@@ -212,6 +212,7 @@ void player_tick() {
       sounds_play(SOUNDS_LASER_INDX);
       globals_setBulletPlaying(false);
     }
+      
     }
     // Go back to waiting for input
     else {

@@ -154,9 +154,11 @@ bool alien_collision(uint16_t bullet_x, uint16_t bullet_y) {
           if (row == ROW3 || row == ROW4) {
             globals_setScore(globals_getScore() + ALIEN1_SCORE);
           }
+          if(sounds_is_available()){
           globals_setExplosionPlaying(true);
           sounds_play(SOUNDS_INVADER_DIE_INDX);
           globals_setExplosionPlaying(false);
+          }
           return true;
         }
       }
@@ -236,7 +238,7 @@ void alien_march_tick() {
       }
     }
 
-    if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !globals_isSaucerPlayed())
+    if(!globals_isExplosionPlayed() && !globals_isBulletPlayed() && !globals_isSaucerPlayed() && sounds_is_available())
     {
       globals_setWalkPlaying(true);
       sounds_play(SOUNDS_WALK1_INDX + progress);

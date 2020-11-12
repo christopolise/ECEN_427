@@ -1,6 +1,7 @@
 #include "flying_alien.h"
 #include "sprites.h"
 #include "hdmi.h"
+#include "sounds.h"
 #include "bullet.h"
 #include "globals.h"
 
@@ -98,5 +99,6 @@ void flying_alien_tick() {
   if (saucer_collision(bullet_x, bullet_y)) {
     bullet_set_player_bullet_collide();
     globals_setScore(globals_getScore() + SAUCER_BONUS);
+    sounds_play(SOUNDS_UFO_DIE_INDX);
   }
 }

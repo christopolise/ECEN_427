@@ -316,8 +316,12 @@ static ssize_t audio_read(struct file *filp, char __user *buff, size_t count,
                    loff_t *offp) {
   pr_info("The read function was called\n");
 
-  return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 &&
-          ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
+  // return (ioread32((audio.virt_addr + I2S_STATUS_REG_OFFSET)) & 0x1FF800 &&
+  //         ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET) & 0x1);
+
+  u32 status = ioread32(audio.virt_addr + I2S_STATUS_REG_OFFSET);  // 0x10 / 4
+  u32 bytes = (status >> 1) & 0x3FF; //0x3FF
+  return (status & 1) && (bytes > 0);
 }
 
 static ssize_t audio_write(struct file *filp, const char __user *buff, size_t count,

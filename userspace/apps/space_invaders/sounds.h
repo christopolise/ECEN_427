@@ -21,6 +21,8 @@
 #define SOUNDS_WALK4_INDX 8
 #define SOUNDS_DEVICE_FILE "/dev/ecen427_audio"
 
+bool sounds_is_available();
+
 int8_t sounds_init(char *devFile);
 
 void sounds_play(uint8_t sound);
