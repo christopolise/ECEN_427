@@ -1,0 +1,100 @@
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Fri Nov 20 14:38:11 2020
+| Host         : ELO-arch running 64-bit Manjaro Linux
+| Command      : upgrade_ip
+| Device       : xc7z020clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_ecen427_PIT_IP_0_1'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_ecen427_PIT_IP_0_1 (user.org:user:ecen427_PIT_IP:1.0) from (Rev. 4) to (Rev. 5)
+
+
+
+
+
+
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Fri Nov 20 14:33:50 2020
+| Host         : ELO-arch running 64-bit Manjaro Linux
+| Command      : upgrade_ip
+| Device       : xc7z020clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_ecen427_PIT_IP_0_1'
+
+1. Summary
+----------
+
+SUCCESS in the conversion of design_1_ecen427_PIT_IP_0_1 (user.org:user:ecen427_PIT_IP:1.0 (Rev. 4)) to Vivado generation flows.
+
+
+
+
+
+
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Fri Nov 20 14:20:56 2020
+| Host         : ELO-arch running 64-bit Manjaro Linux
+| Command      : upgrade_ip
+| Device       : xc7z020clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_ecen427_PIT_IP_0_1'
+
+1. Summary
+----------
+
+SUCCESS in the conversion of design_1_ecen427_PIT_IP_0_1 (user.org:user:ecen427_PIT_IP:1.0 (Rev. 4)) to Vivado generation flows.
+
+
+
+
+
+
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Fri Nov 20 14:16:21 2020
+| Host         : ELO-arch running 64-bit Manjaro Linux
+| Command      : upgrade_ip
+| Device       : xc7z020clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_ecen427_PIT_IP_0_1'
+
+1. Summary
+----------
+
+SUCCESS in the conversion of design_1_ecen427_PIT_IP_0_1 (user.org:user:ecen427_PIT_IP:1.0 (Rev. 4)) to Vivado generation flows.
+
+
+
+
+
+
+Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2017.4 (lin64) Build 2086221 Fri Dec 15 20:54:30 MST 2017
+| Date         : Fri Nov 20 13:48:37 2020
+| Host         : ELO-arch running 64-bit Manjaro Linux
+| Command      : upgrade_ip
+| Device       : xc7z020clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_ecen427_PIT_IP_0_1'
+
+1. Summary
+----------
+
+SUCCESS in the conversion of design_1_ecen427_PIT_IP_0_1 (user.org:user:ecen427_PIT_IP:1.0 (Rev. 4)) to Vivado generation flows.
+
