@@ -62,7 +62,6 @@ struct pit_device {
 
   // Add any device-specific items to this that you need
   struct resource *mem_register; // Allocates a region of memory
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,8 +87,10 @@ static int pit_init(void);
 static void pit_exit(void);
 static int pit_probe(struct platform_device *pdev);
 static int pit_remove(struct platform_device *pdev);
-static ssize_t pit_do_read(struct device *dev, struct device_attribute * attr, char *buf);
-static ssize_t pit_do_write(struct device *dev, struct device_attribute * attr, const char *buf, size_t count);
+static ssize_t pit_do_read(struct device *dev, struct device_attribute *attr,
+                           char *buf);
+static ssize_t pit_do_write(struct device *dev, struct device_attribute *attr,
+                            const char *buf, size_t count);
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////// Driver Functions ///////////////////////////////////////
@@ -123,13 +124,12 @@ struct file_operations pit_fops = {
     .owner = THIS_MODULE,
 };
 
-struct attribute * bundle[NUM_OF_ATTR];
+struct attribute *bundle[NUM_OF_ATTR];
 
 static struct device_attribute period_dev_attr;
 static struct device_attribute enable_timer_dev_attr;
 static struct device_attribute enable_interrupts_dev_attr;
 static struct attribute_group pit_attr_group;
-
 
 // This section contains driver-level functions.  Remember, when you print
 // logging information from these functions, you should use the pr_*() functions
@@ -280,8 +280,7 @@ static int pit_probe(struct platform_device *pdev) {
 
   // Reserve the memory region -- request_mem_region
   // Get a (virtual memory) pointer to the device -- ioremap
-  pit.mem_register =
-      request_mem_region(pit.phys_addr, pit.mem_size, "pit_427");
+  pit.mem_register = request_mem_region(pit.phys_addr, pit.mem_size, "pit_427");
 
   // In the case memory cannot be allocated for device
   if (IS_ERR(pit.mem_register)) {
@@ -299,42 +298,43 @@ static int pit_probe(struct platform_device *pdev) {
   }
   dev_info(pit.dev, "Virt addr: %p\n", pit.virt_addr);
 
-// Assign appropriate name, mode, and funct pointer to period attr
-period_dev_attr.attr.name = "period";
-period_dev_attr.attr.mode = SUDO_PERMISH;  // rw-r--r--
-period_dev_attr.show = pit_do_read;
-period_dev_attr.store = pit_do_write;
+  // Assign appropriate name, mode, and funct pointer to period attr
+  period_dev_attr.attr.name = "period";
+  period_dev_attr.attr.mode = SUDO_PERMISH; // rw-r--r--
+  period_dev_attr.show = pit_do_read;
+  period_dev_attr.store = pit_do_write;
 
-// Assign appropriate name, mode, and funct pointer to run attr
-enable_timer_dev_attr.attr.name = "run";
-enable_timer_dev_attr.attr.mode = SUDO_PERMISH; // rw-r--r--
-enable_timer_dev_attr.show = pit_do_read;
-enable_timer_dev_attr.store = pit_do_write;
+  // Assign appropriate name, mode, and funct pointer to run attr
+  enable_timer_dev_attr.attr.name = "run";
+  enable_timer_dev_attr.attr.mode = SUDO_PERMISH; // rw-r--r--
+  enable_timer_dev_attr.show = pit_do_read;
+  enable_timer_dev_attr.store = pit_do_write;
 
-// Assign appropriate name, mode, and funct pointer to int_en attr
-enable_interrupts_dev_attr.attr.name = "int_en";
-enable_interrupts_dev_attr.attr.mode = SUDO_PERMISH; // rw-r--r--
-enable_interrupts_dev_attr.show = pit_do_read;
-enable_interrupts_dev_attr.store = pit_do_write;
+  // Assign appropriate name, mode, and funct pointer to int_en attr
+  enable_interrupts_dev_attr.attr.name = "int_en";
+  enable_interrupts_dev_attr.attr.mode = SUDO_PERMISH; // rw-r--r--
+  enable_interrupts_dev_attr.show = pit_do_read;
+  enable_interrupts_dev_attr.store = pit_do_write;
 
-// Handles all attrs as a group so that err recovery is easier
-bundle[PERIOD_IND] = &period_dev_attr.attr;
-bundle[RUN_IND] = &enable_timer_dev_attr.attr;
-bundle[INT_EN_IND] = &enable_interrupts_dev_attr.attr;
-bundle[NUM_OF_ATTR - 1] = NULL;
+  // Handles all attrs as a group so that err recovery is easier
+  bundle[PERIOD_IND] = &period_dev_attr.attr;
+  bundle[RUN_IND] = &enable_timer_dev_attr.attr;
+  bundle[INT_EN_IND] = &enable_interrupts_dev_attr.attr;
+  bundle[NUM_OF_ATTR - 1] = NULL;
 
-pit_attr_group.attrs = bundle;
+  pit_attr_group.attrs = bundle;
 
   err = sysfs_create_group(&pit.dev->kobj, &pit_attr_group);
 
   // In case that we could not register all attributes as a group successfully
   if (err) {
-    dev_err(pit.dev, "SYSFS: Could not create device attribute group successfully\n");
+    dev_err(pit.dev,
+            "SYSFS: Could not create device attribute group successfully\n");
     goto sysfs_create_group_err;
   }
 
-  iowrite32(GAME_MODE, pit.virt_addr); //turn on control bits
-  iowrite32(INIT_SPEED * TIME_FACT, pit.virt_addr + 1); //set period
+  iowrite32(GAME_MODE, pit.virt_addr);                  // turn on control bits
+  iowrite32(INIT_SPEED * TIME_FACT, pit.virt_addr + 1); // set period
   // If any of the above functions fail, return an appropriate linux error
   // code, and make sure you reverse any function calls that were
   // successful.
@@ -346,7 +346,8 @@ pit_attr_group.attrs = bundle;
   // ERROR block
 
 sysfs_create_group_err:
-  dev_err(pit.dev, "SYSFS: Could not create device attribute group successfully\n");
+  dev_err(pit.dev,
+          "SYSFS: Could not create device attribute group successfully\n");
   sysfs_remove_group(&pit.dev->kobj, &pit_attr_group);
 
 ioremap_err:
@@ -378,46 +379,51 @@ static int pit_remove(struct platform_device *pdev) {
   return SUCCESS;
 }
 
-// Function is called when an attribute is asked to show something (or basically read its val)
+// Function is called when an attribute is asked to show something (or basically
+// read its val)
 // @param dev - Pointer to device so that we know which dev is calling the show
-// @param attr - Pointer to actual attribute that will be in the sysfs that we want info from
+// @param attr - Pointer to actual attribute that will be in the sysfs that we
+// want info from
 // @param buf - string in which info is transported to userspace
 // RETURN: size of bytes returned to userspace
-static ssize_t pit_do_read(struct device *dev, struct device_attribute * attr, char *buf)
-{
+static ssize_t pit_do_read(struct device *dev, struct device_attribute *attr,
+                           char *buf) {
   char opt = attr->attr.name[FIRST_LETTER];
   u32 val;
 
   pr_info("SYSFS: Reading value from %s attr...\n", attr->attr.name);
 
-  // Based on first letter of attr name, will read from correct register and report value back to sysfs
-  switch(opt){
-    case 'p':
-      val = ioread32(pit.virt_addr + 1);
-      val /= TIME_FACT;
-      pr_info("Period val: %d\n", val);
-      return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
-    case 'r':
-      val = ioread32(pit.virt_addr) & PIT_RUN_MASK;
-      pr_info("Run val: %d\n", val);
-      return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
-    case 'i':
-      val = (ioread32(pit.virt_addr) & PIT_INT_EN_MASK)? 1 : 0;
-      pr_info("Interrupt enable val: %d\n", val);
-      return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
-    default:
-      pr_err("SYSFS: Could not read value from register\n");
-      return ATTR_ERROR;
+  // Based on first letter of attr name, will read from correct register and
+  // report value back to sysfs
+  switch (opt) {
+  case 'p':
+    val = ioread32(pit.virt_addr + 1);
+    val /= TIME_FACT;
+    pr_info("Period val: %d\n", val);
+    return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
+  case 'r':
+    val = ioread32(pit.virt_addr) & PIT_RUN_MASK;
+    pr_info("Run val: %d\n", val);
+    return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
+  case 'i':
+    val = (ioread32(pit.virt_addr) & PIT_INT_EN_MASK) ? 1 : 0;
+    pr_info("Interrupt enable val: %d\n", val);
+    return scnprintf(buf, MAX_BUF_SIZE, "%s:%u\n", attr->attr.name, val);
+  default:
+    pr_err("SYSFS: Could not read value from register\n");
+    return ATTR_ERROR;
   }
 }
 
-// Function is called when an attribute is asked to store something (or basically write a val)
+// Function is called when an attribute is asked to store something (or
+// basically write a val)
 // @param dev - Pointer to device so that we know which dev is calling the store
-// @param attr - Pointer to actual attribute that will be in the sysfs that we want to write info to
+// @param attr - Pointer to actual attribute that will be in the sysfs that we
+// want to write info to
 // @param buf - string in which info written to specified register based on attr
-// RETURN: size of bytes returned to userspace 
-static ssize_t pit_do_write(struct device *dev, struct device_attribute * attr, const char *buf, size_t count)
-{
+// RETURN: size of bytes returned to userspace
+static ssize_t pit_do_write(struct device *dev, struct device_attribute *attr,
+                            const char *buf, size_t count) {
   char opt = attr->attr.name[FIRST_LETTER];
   u32 num = simple_strtol(buf, NULL, BASE_FACT);
 
@@ -425,22 +431,23 @@ static ssize_t pit_do_write(struct device *dev, struct device_attribute * attr, 
 
   pr_info("SYSFS: Writing value to %s attr...\n", attr->attr.name);
 
-  // Based on first letter of attr name, will write to correct register and report size back to sysfs
-  switch(opt){
-    case 'p':
-      iowrite32(num * TIME_FACT, pit.virt_addr + 1);
-      pr_info("Period val: %d written\n", num);
-      return count;
-    case 'r':
-      iowrite32((PIT_INT_EN_MASK & cur_ctrl) + num, pit.virt_addr);
-      pr_info("Run val: %d written\n", num);
-      return count;
-    case 'i':
-      iowrite32((PIT_RUN_MASK & cur_ctrl) + (num << 1), pit.virt_addr);
-      pr_info("Interrupt enable val: %d written\n", num);
-      return count;
-    default:
-      pr_err("SYSFS: Could not write value to register\n");
-      return ATTR_ERROR;
+  // Based on first letter of attr name, will write to correct register and
+  // report size back to sysfs
+  switch (opt) {
+  case 'p':
+    iowrite32(num * TIME_FACT, pit.virt_addr + 1);
+    pr_info("Period val: %d written\n", num);
+    return count;
+  case 'r':
+    iowrite32((PIT_INT_EN_MASK & cur_ctrl) + num, pit.virt_addr);
+    pr_info("Run val: %d written\n", num);
+    return count;
+  case 'i':
+    iowrite32((PIT_RUN_MASK & cur_ctrl) + (num << 1), pit.virt_addr);
+    pr_info("Interrupt enable val: %d written\n", num);
+    return count;
+  default:
+    pr_err("SYSFS: Could not write value to register\n");
+    return ATTR_ERROR;
   }
 }
