@@ -65,7 +65,7 @@ bool init() {
   buttons_enable_interrupts();
 
   // Enable button and FIT interrupt lines on interrupt controller
-  intc_irq_enable(SYSTEM_INTC_IRQ_BUTTONS_IRQ | SYSTEM_INTC_IRQ_FIT_IRQ);
+  intc_irq_enable(SYSTEM_INTC_IRQ_BUTTONS_IRQ | SYSTEM_INTC_IRQ_PIT_IRQ);
   return success;
 }
 
@@ -85,7 +85,7 @@ int main() {
     switches_ack_interrupt();
 
     // true every 10 ms
-    if (interrupts & SYSTEM_INTC_IRQ_FIT_MASK) {
+    if (interrupts & SYSTEM_INTC_IRQ_PIT_MASK) {
       button_debouncer_tick();
       player_tick();
       globals_tick();
