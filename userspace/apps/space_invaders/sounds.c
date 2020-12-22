@@ -54,15 +54,15 @@ static int8_t vol_level = VOL_LEVEL_START;
 
 // Array contains all the filepaths for the sound
 char *audio_files[NUM_OF_SOUND_FX] = {
-    "sounds/invader_die.wav",
-    "sounds/laser.wav",
-    "sounds/player_die.wav",
-    "sounds/ufo_die.wav",
-    "sounds/ufo.wav",
-    "sounds/walk1.wav",
-    "sounds/walk2.wav",
-    "sounds/walk3.wav",
-    "sounds/walk4.wav"};
+    "../apps/space_invaders/sounds/invader_die.wav",
+    "../apps/space_invaders/sounds/laser.wav",
+    "../apps/space_invaders/sounds/player_die.wav",
+    "../apps/space_invaders/sounds/ufo_die.wav",
+    "../apps/space_invaders/sounds/ufo.wav",
+    "../apps/space_invaders/sounds/walk1.wav",
+    "../apps/space_invaders/sounds/walk2.wav",
+    "../apps/space_invaders/sounds/walk3.wav",
+    "../apps/space_invaders/sounds/walk4.wav"};
 
 // Array contains all processed audio snippets
 int32_t *processed_audio_files[NUM_OF_SOUND_FX] = {
