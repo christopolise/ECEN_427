@@ -54,15 +54,15 @@ static int8_t vol_level = VOL_LEVEL_START;
 
 // Array contains all the filepaths for the sound
 char *audio_files[NUM_OF_SOUND_FX] = {
-    "/home/byu/ecen427/userspace/sounds/invader_die.wav",
-    "/home/byu/ecen427/userspace/sounds/laser.wav",
-    "/home/byu/ecen427/userspace/sounds/player_die.wav",
-    "/home/byu/ecen427/userspace/sounds/ufo_die.wav",
-    "/home/byu/ecen427/userspace/sounds/ufo.wav",
-    "/home/byu/ecen427/userspace/sounds/walk1.wav",
-    "/home/byu/ecen427/userspace/sounds/walk2.wav",
-    "/home/byu/ecen427/userspace/sounds/walk3.wav",
-    "/home/byu/ecen427/userspace/sounds/walk4.wav"};
+    "sounds/invader_die.wav",
+    "sounds/laser.wav",
+    "sounds/player_die.wav",
+    "sounds/ufo_die.wav",
+    "sounds/ufo.wav",
+    "sounds/walk1.wav",
+    "sounds/walk2.wav",
+    "sounds/walk3.wav",
+    "sounds/walk4.wav"};
 
 // Array contains all processed audio snippets
 int32_t *processed_audio_files[NUM_OF_SOUND_FX] = {
